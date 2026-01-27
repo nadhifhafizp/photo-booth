@@ -5,7 +5,7 @@ import NextImage from 'next/image'; // UBAH IMPORT DI SINI (Alias menjadi NextIm
 import { Camera, Download, RefreshCw, Image as ImageIcon, Grid, LayoutTemplate, Check, Sparkles, ChevronLeft } from 'lucide-react';
 import clsx from 'clsx';
 import Link from 'next/link';
-import FadeIn from '../../components/Fadein';
+import FadeIn from '@/components/FadeIn_temp';
 
 // --- KONFIGURASI LAYOUT & BACKGROUND ---
 type LayoutType = 'single' | 'grid4' | 'grid6';
