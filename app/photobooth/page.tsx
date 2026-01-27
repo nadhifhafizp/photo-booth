@@ -1,8 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Camera, Download, RefreshCw, Image as ImageIcon, Grid, LayoutTemplate, Check, Sparkles } from 'lucide-react';
+import NextImage from 'next/image'; // UBAH IMPORT DI SINI (Alias menjadi NextImage)
+import { Camera, Download, RefreshCw, Image as ImageIcon, Grid, LayoutTemplate, Check, Sparkles, ChevronLeft } from 'lucide-react';
 import clsx from 'clsx';
+import Link from 'next/link';
+import FadeIn from '../../components/Fadein';
 
 // --- KONFIGURASI LAYOUT & BACKGROUND ---
 type LayoutType = 'single' | 'grid4' | 'grid6';
@@ -139,7 +142,9 @@ export default function PhotoboothPage() {
 
     const loadedImages = await Promise.all(images.map(src => {
         return new Promise<HTMLImageElement>((resolve) => {
-            const img = new Image();
+            // DI SINI MASALAHNYA:
+            // "new Image()" sekarang aman karena kita pakai "NextImage" untuk komponen Next.js
+            const img = new Image(); 
             img.onload = () => resolve(img);
             img.src = src;
         });
@@ -189,15 +194,12 @@ export default function PhotoboothPage() {
     ctx.fillStyle = bgConfig?.textColor || '#000000';
     ctx.textAlign = 'center';
     
-    // Judul Besar
     ctx.font = 'bold 60px Inter, sans-serif';
     ctx.fillText('KKN UNSIKA', finalWidth / 2, finalHeight - 180);
     
-    // Sub Judul
     ctx.font = '500 40px Inter, sans-serif';
     ctx.fillText('Desa Sukalaksana', finalWidth / 2, finalHeight - 120);
 
-    // Tulisan Spesifik
     ctx.font = 'italic 24px Inter, sans-serif';
     ctx.globalAlpha = 0.8;
     ctx.fillText('Photobooth by KKN UNSIKA Desa Sukalaksana', finalWidth / 2, finalHeight - 50);
@@ -216,24 +218,42 @@ export default function PhotoboothPage() {
   };
 
   return (
-    // TAMBAHKAN CLASS 'pt-28' DI SINI
-    // Ini memberi jarak padding-top agar konten turun ke bawah Navbar
-    <main className="min-h-screen bg-slate-50 pt-28 pb-10 relative overflow-hidden font-sans">
+    <main className="min-h-screen relative overflow-hidden font-sans pt-28 pb-10 flex flex-col items-center">
       
-      <div className="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] z-0 pointer-events-none"></div>
-      <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-green-200/40 rounded-full blur-3xl z-0 pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] bg-green-300/30 rounded-full blur-3xl z-0 pointer-events-none"></div>
+      {/* 1. HERO BACKGROUND IMAGE (Gunakan NextImage) */}
+      <div className="absolute inset-0 z-0">
+         <NextImage 
+            src="https://images.unsplash.com/photo-1500382017468-9049fed747ef" 
+            alt="Background Desa" 
+            fill 
+            className="object-cover brightness-[0.5]"
+            priority
+         />
+      </div>
 
       <div className="container mx-auto px-4 relative z-10 flex flex-col items-center">
         
-        {/* Header Teks */}
-        <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-800 mb-2">Photobooth KKN</h1>
-            <p className="text-green-600 font-medium">Abadikan Momen di Lokakarya Kecamatan</p>
+        {/* Tombol Kembali (Opsional, agar mudah navigasi) */}
+        <div className="w-full max-w-6xl mb-6">
+            <Link href="/" className="inline-flex items-center gap-2 text-white/80 hover:text-white transition">
+                <ChevronLeft size={20} /> Kembali ke Beranda
+            </Link>
         </div>
 
-        {/* CONTAINER UTAMA */}
-        <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-6xl overflow-hidden border border-slate-100 flex flex-col lg:flex-row min-h-[600px] lg:h-[700px]">
+        {/* 2. HEADER TEKS HERO STYLE */}
+        <FadeIn>
+            <div className="text-center mb-8 text-white">
+                <h1 className="text-4xl md:text-5xl font-bold mb-3 drop-shadow-lg tracking-tight">
+                    Photobooth <span className="text-green-400">KKN</span>
+                </h1>
+                <p className="text-lg text-slate-200 font-medium drop-shadow-md max-w-xl mx-auto">
+                    Abadikan momen kebersamaan Anda di Lokakarya Kecamatan Desa Sukalaksana
+                </p>
+            </div>
+        </FadeIn>
+
+        {/* 3. CARD UTAMA */}
+        <div className="bg-white/95 backdrop-blur-md rounded-4xl shadow-2xl w-full max-w-6xl overflow-hidden border border-white/20 flex flex-col lg:flex-row min-h-150 lg:h-175">
             
             {/* PANEL VISUAL */}
             <div className="relative w-full lg:w-2/3 bg-slate-900 flex items-center justify-center overflow-hidden group">
@@ -254,7 +274,7 @@ export default function PhotoboothPage() {
                                 Pose {currentShot + 1} / {LAYOUTS.find(l=>l.id===selectedLayout)?.count}
                             </div>
                         )}
-                        <div className="absolute inset-0 opacity-20 pointer-events-none border-[12px] border-white/10"></div>
+                        <div className="absolute inset-0 opacity-20 pointer-events-none border-12 border-white/10"></div>
                     </div>
                 ) : (
                     <div className="relative w-full h-full bg-slate-100 p-8 flex items-center justify-center">
@@ -343,8 +363,7 @@ export default function PhotoboothPage() {
             </div>
         </div>
         
-        {/* TULISAN DI UI HALAMAN BAWAH */}
-        <p className="mt-8 text-slate-500 font-semibold text-sm">
+        <p className="mt-8 text-slate-300 font-semibold text-sm drop-shadow-md">
              Photobooth by KKN UNSIKA Desa Sukalaksana
         </p>
 

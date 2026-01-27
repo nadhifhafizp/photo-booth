@@ -14,11 +14,10 @@ export default function Navbar() {
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
 
-  // --- LOGIKA BARU: Deteksi Halaman Photobooth ---
-  // Halaman-halaman ini WAJIB menggunakan Navbar putih (Solid) agar tulisan terbaca
-  const isSolidPage = pathname === '/photobooth' || pathname === '/layanan' || pathname === '/profil';
+  // --- UPDATE: HAPUS '/photobooth' dari sini ---
+  // Biarkan Photobooth menggunakan navbar transparan (Teks Putih) agar cocok dengan BG Gelap
+  const isSolidPage = pathname === '/layanan' || pathname === '/profil';
   
-  // Navbar jadi solid jika: Di-scroll, Menu dibuka, ATAU berada di halaman khusus (isSolidPage)
   const useSolidStyle = isScrolled || isOpen || isSolidPage;
 
   useEffect(() => {
@@ -30,7 +29,6 @@ export default function Navbar() {
       const currentScrollY = window.scrollY;
       setIsScrolled(currentScrollY > 20);
 
-      // Sembunyikan navbar jika scroll ke bawah jauh, tampilkan jika naik
       if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
         setIsVisible(false);
         setIsOpen(false); 
@@ -59,10 +57,8 @@ export default function Navbar() {
   return (
     <nav 
       className={clsx(
-        // Z-Index tinggi agar selalu di atas
-        "fixed top-0 left-0 right-0 z-[100] w-full transition-all duration-300",
+        "fixed top-0 left-0 right-0 z-999 w-full transition-all duration-300",
         isVisible ? "translate-y-0" : "-translate-y-full",
-        // UBAH STYLE BERDASARKAN KONDISI useSolidStyle
         useSolidStyle
           ? "bg-white shadow-md border-b border-slate-200 py-3" 
           : "bg-transparent py-5"
@@ -86,7 +82,6 @@ export default function Navbar() {
           </div>
           <span className={clsx(
             "transition-colors duration-300 hidden md:block",
-            // Ubah warna teks: Putih jika transparan, Hitam jika solid
             (!useSolidStyle) ? "text-white drop-shadow-md" : "text-slate-800"
           )}>
             Desa Sukalaksana
