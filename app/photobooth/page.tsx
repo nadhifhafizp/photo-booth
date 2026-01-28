@@ -19,56 +19,65 @@ const LAYOUTS = [
   { id: 'strip', label: 'Strip 1x3', count: 3, icon: <RectangleVertical size={20} /> },
 ];
 
-// --- KONFIGURASI BACKGROUND ---
+// --- KONFIGURASI BACKGROUND (SESUAI FILE YANG DIUPLOAD) ---
 const BACKGROUNDS = [
   { 
-    id: 'cute-paper', 
-    label: 'Kertas & Stiker', 
-    imageUrl: 'https://images.unsplash.com/photo-1606726426777-162c0569d5cb?q=80&w=1800&auto=format&fit=crop',
-    thumbUrl: 'https://images.unsplash.com/photo-1606726426777-162c0569d5cb?q=80&w=100&auto=format&fit=crop',
-    text: '#1e293b', 
+    id: 'bg-1', 
+    label: 'Tema 1', 
+    imageUrl: '/images/backgrounds/bg 1.jpg',
+    thumbUrl: '/images/backgrounds/bg 1.jpg',
+    text: '#ffffff', // Teks Putih (asumsi background gelap/kontras)
     frameColor: '#ffffff',
-    fallbackColor: '#f1f5f9'
+    fallbackColor: '#334155'
   },
   { 
-    id: 'vintage-floral', 
-    label: 'Vintage Floral', 
-    imageUrl: 'https://images.unsplash.com/photo-1553531384-cc64ac80f931?q=80&w=1800&auto=format&fit=crop',
-    thumbUrl: 'https://images.unsplash.com/photo-1553531384-cc64ac80f931?q=80&w=100&auto=format&fit=crop',
-    text: '#4a0404',
+    id: 'bg-2', 
+    label: 'Tema 2', 
+    imageUrl: '/images/backgrounds/bg 2.jpg',
+    thumbUrl: '/images/backgrounds/bg 2.jpg',
+    text: '#0d542b', // Teks Gelap
+    frameColor: '#f8fafc',
+    fallbackColor: '#e2e8f0'
+  },
+  { 
+    id: 'bg-3', 
+    label: 'Tema 3', 
+    imageUrl: '/images/backgrounds/bg 3.jpg',
+    thumbUrl: '/images/backgrounds/bg 3.jpg',
+    text: '#545454', // Teks Coklat Tua
     frameColor: '#fffbeb',
     fallbackColor: '#fff7ed'
   },
   { 
-    id: 'aesthetic-grid', 
-    label: 'Jurnal Grid', 
-    imageUrl: 'https://images.unsplash.com/photo-1616628188550-808682f3926d?q=80&w=1800&auto=format&fit=crop',
-    thumbUrl: 'https://images.unsplash.com/photo-1616628188550-808682f3926d?q=80&w=100&auto=format&fit=crop',
-    text: '#334155',
+    id: 'bg-4', 
+    label: 'Tema 4', 
+    imageUrl: '/images/backgrounds/bg 4.jpg',
+    thumbUrl: '/images/backgrounds/bg 4.jpg',
+    text: '#0d542b',
     frameColor: '#ffffff',
-    fallbackColor: '#f8fafc'
+    fallbackColor: '#0f172a'
   },
   { 
-    id: 'pink-dream', 
-    label: 'Pink Awan', 
-    imageUrl: 'https://images.unsplash.com/photo-1603922412158-090254737077?q=80&w=1800&auto=format&fit=crop',
-    thumbUrl: 'https://images.unsplash.com/photo-1603922412158-090254737077?q=80&w=100&auto=format&fit=crop',
-    text: '#831843',
-    frameColor: '#fdf2f8',
-    fallbackColor: '#fce7f3'
+    id: 'bg-5', 
+    label: 'Tema 5', 
+    imageUrl: '/images/backgrounds/bg 5.jpg',
+    thumbUrl: '/images/backgrounds/bg 5.jpg',
+    text: '#ffffff',
+    frameColor: '#f3f4f6',
+    fallbackColor: '#e5e5e5'
   },
 ];
 
-// --- FUNGSI HELPER YANG LEBIH AMAN ---
+// --- FUNGSI HELPER LOAD IMAGE (AMAN) ---
 const loadImage = (src: string): Promise<HTMLImageElement> => {
     return new Promise((resolve, reject) => {
         const img = new Image();
-        // Hanya set crossOrigin jika URL eksternal (bukan base64 data)
+        // Hanya set crossOrigin jika URL eksternal (http/https)
         if (src.startsWith('http')) {
             img.crossOrigin = "anonymous";
         }
         img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error(`Gagal load gambar: ${src.substring(0, 30)}...`));
+        img.onerror = () => reject(new Error(`Gagal load gambar: ${src}`));
         img.src = src;
     });
 };
@@ -157,7 +166,6 @@ export default function PhotoboothPage() {
       if (shotIndex + 1 < targetCount) setTimeout(() => startCountdown(shotIndex + 1), 1500);
       else {
          setIsGenerating(true);
-         // Beri jeda sedikit agar state terupdate sebelum generate
          setTimeout(() => generateStripLayout(bgIdRef.current, photosRef.current), 500);
       }
     }
@@ -188,22 +196,22 @@ export default function PhotoboothPage() {
 
         const bgConfig = BACKGROUNDS.find(b => b.id === bgId) || BACKGROUNDS[0];
 
-        // 1. Load Foto User (Wajib)
+        // 1. Load Foto User
         const userPhotosImg = await Promise.all(images.map(src => loadImage(src)));
 
-        // 2. Load Background (Opsional - dengan Fallback)
+        // 2. Load Background Lokal
         let bgImg: HTMLImageElement | null = null;
         try {
             bgImg = await loadImage(bgConfig.imageUrl);
         } catch (e) {
-            console.warn("Gagal load background, menggunakan warna solid.", e);
+            console.warn("Gagal load background lokal:", e);
         }
 
         // 3. Draw Background
         if (bgImg) {
+            // Gunakan drawImageCover agar bg mengisi penuh canvas tanpa gepeng
             drawImageCover(ctx, bgImg, 0, 0, fW, fH);
         } else {
-            // Fallback jika gambar gagal
             ctx.fillStyle = bgConfig.fallbackColor || '#eeeeee';
             ctx.fillRect(0, 0, fW, fH);
         }
@@ -223,21 +231,28 @@ export default function PhotoboothPage() {
             drawImageCover(ctx, img, paddingX, y, photoW, photoH);
         });
 
-        // 5. Watermark
+        // 5. Watermark (Text)
+        // Pastikan font sudah ter-load, jika tidak pakai fallback sans-serif
         ctx.fillStyle = bgConfig.text; ctx.textAlign = 'center';
+        
+        // Judul Besar
         ctx.font = 'bold 42px "Playfair Display", serif'; 
         ctx.fillText('KKN UNSIKA', fW/2, fH - 170);
+        
+        // Sub Judul
         ctx.font = '500 24px "DM Sans", sans-serif'; 
         ctx.fillText('Desa Sukalaksana', fW/2, fH - 120);
-        ctx.font = 'italic 16px "DM Sans", sans-serif'; ctx.globalAlpha = 0.6;
-        ctx.fillText(`${new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}`, fW/2, fH - 70);
+        
+        // Footer Kecil
+        ctx.font = 'italic 16px "DM Sans", sans-serif'; ctx.globalAlpha = 0.7;
+        ctx.fillText(`${new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})} • Edisi Spesial`, fW/2, fH - 70);
 
         setFinalImage(canvas.toDataURL('image/png', 1.0));
         setStep('result');
     } catch (error) {
         console.error("Gagal generate final layout:", error);
-        alert("Terjadi kesalahan saat memproses foto.");
-        setStep('setup'); // Kembali ke awal jika error fatal
+        alert("Terjadi kesalahan saat memproses foto. Pastikan file background ada di folder public/images/backgrounds.");
+        setStep('setup');
     } finally {
         setIsGenerating(false);
     }
@@ -246,13 +261,13 @@ export default function PhotoboothPage() {
   const download = () => {
     if(!finalImage) return;
     const a = document.createElement('a'); a.href = finalImage; 
-    a.download = `photostrip-${Date.now()}.png`; a.click();
+    a.download = `photostrip-aesthetic-${Date.now()}.png`; a.click();
   };
 
   return (
     <main className={clsx("min-h-screen relative overflow-hidden pt-24 pb-10 flex flex-col items-center", playfair.variable, dmSans.variable, "font-sans")}>
       
-      {/* BACKGROUND */}
+      {/* BACKGROUND HALAMAN */}
       <div className="absolute inset-0 z-0">
          <NextImage src="https://images.unsplash.com/photo-1500382017468-9049fed747ef" alt="bg" fill className="object-cover" priority />
          <div className="absolute inset-0 bg-slate-900/60 mix-blend-multiply" />
@@ -277,6 +292,7 @@ export default function PhotoboothPage() {
         {/* INTERFACE */}
         <div className="bg-white/10 backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl w-full max-w-5xl flex flex-col lg:flex-row overflow-hidden min-h-150 animate-in zoom-in-95 duration-500 relative">
             
+            {/* Loading Indicator */}
             {isGenerating && (
                  <div className="absolute inset-0 z-60 bg-black/50 backdrop-blur-md flex flex-col items-center justify-center text-white animate-in fade-in">
                      <Sparkles size={40} className="animate-spin-slow mb-4 text-green-400"/>
@@ -284,7 +300,7 @@ export default function PhotoboothPage() {
                  </div>
             )}
 
-            {/* KIRI: VISUAL */}
+            {/* KIRI: VISUAL (Kamera / Hasil) */}
             <div className="relative w-full lg:w-2/3 bg-black/40 flex items-center justify-center p-6">
                 
                 {step !== 'result' ? (
@@ -305,6 +321,7 @@ export default function PhotoboothPage() {
                             </div>
                         )}
                         
+                        {/* Grid Helper 1x3 */}
                         <div className="absolute inset-0 border-2 border-white/20 grid grid-rows-3 pointer-events-none">
                             <div className="border-b border-white/20"></div><div className="border-b border-white/20"></div>
                         </div>
@@ -337,9 +354,12 @@ export default function PhotoboothPage() {
                                     <button key={bg.id} onClick={()=>setSelectedBgId(bg.id)}
                                         className={clsx("w-full flex items-center gap-3 p-2 rounded-xl border transition-all relative overflow-hidden group", 
                                         selectedBgId === bg.id ? "border-green-500 ring-2 ring-green-500" : "border-slate-200 hover:border-green-300")}>
+                                        
+                                        {/* Thumbnail BG Lokal */}
                                         <div className="w-12 h-12 rounded-lg shadow-sm relative overflow-hidden shrink-0 bg-slate-100">
                                             <NextImage src={bg.thumbUrl} alt={bg.label} fill className="object-cover" />
                                         </div>
+                                        
                                         <div className="text-left flex-1 z-10">
                                             <div className={clsx("text-sm font-bold", selectedBgId===bg.id ? "text-slate-900":"text-slate-600")}>{bg.label}</div>
                                         </div>
@@ -355,7 +375,7 @@ export default function PhotoboothPage() {
                     </div>
                 )}
 
-                {/* LOGIKA TAMPILAN CAPTURING & RESULT SAMA SEPERTI SEBELUMNYA */}
+                {/* State lainnya (Capturing & Result) */}
                 {step === 'capturing' && (
                     <div className="flex flex-col h-full justify-center items-center text-center animate-in zoom-in-95">
                         <div className="mb-6 relative">
