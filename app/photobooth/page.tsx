@@ -31,6 +31,7 @@ export default function PhotoboothPage() {
   // Camera settings & controls
   const [timerDuration, setTimerDuration] = useState<number>(3);
   const [isMirrored, setIsMirrored]       = useState<boolean>(true);
+  const [facingMode, setFacingMode]       = useState<'user' | 'environment'>('user');
   const [countdown, setCountdown]         = useState<number | null>(null);
   const [currentShot, setCurrentShot]     = useState(0);
   const [isFlash, setIsFlash]             = useState(false);
@@ -85,16 +86,20 @@ export default function PhotoboothPage() {
         return;
       }
 
-      logger.info('Inisialisasi perangkat webcam Snaporia...');
+      logger.info(`Inisialisasi perangkat webcam Snaporia (facingMode: ${facingMode})...`);
       try {
         const ms = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+          video: {
+            facingMode: { ideal: facingMode },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
           audio: false,
         });
         activeStream = ms;
         setStream(ms);
         setCameraError(null);
-        logger.info('Webcam Snaporia berhasil aktif.');
+        logger.info(`Webcam Snaporia berhasil aktif (${facingMode}).`);
 
         if (videoRef.current) {
           videoRef.current.srcObject = ms;
@@ -118,7 +123,7 @@ export default function PhotoboothPage() {
         activeStream.getTracks().forEach(t => t.stop());
       }
     };
-  }, [isCameraNeeded, retryCount]);
+  }, [isCameraNeeded, retryCount, facingMode]);
 
   const useDemoCamera = () => {
     logger.info('Mengaktifkan kamera demo simulasi Snaporia...');
@@ -193,6 +198,23 @@ export default function PhotoboothPage() {
 
   const toggleMirror = () => {
     setIsMirrored(curr => !curr);
+  };
+
+  const toggleCameraFacing = () => {
+    if (isCapturing) return;
+    const nextMode = facingMode === 'user' ? 'environment' : 'user';
+    logger.info(`Beralih kamera dari ${facingMode} ke ${nextMode}`);
+
+    // Stop current stream before switching
+    if (stream) {
+      stream.getTracks().forEach(t => t.stop());
+      setStream(null);
+    }
+
+    setFacingMode(nextMode);
+    // Back camera defaults to unmirrored, front camera defaults to mirrored
+    setIsMirrored(nextMode === 'user');
+    setCameraError(null);
   };
 
   // Capture sequence
@@ -416,6 +438,8 @@ export default function PhotoboothPage() {
             onToggleTimer={toggleTimer}
             isMirrored={isMirrored}
             onToggleMirror={toggleMirror}
+            facingMode={facingMode}
+            onToggleCameraFacing={toggleCameraFacing}
             onTriggerShutter={startCaptureSequence}
             isCapturing={isCapturing}
           />

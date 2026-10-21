@@ -1,7 +1,7 @@
 'use client';
 
 import React, { RefObject } from 'react';
-import { Camera, CameraOff, RefreshCw, FlipHorizontal, Timer, Sparkles, Info } from 'lucide-react';
+import { Camera, CameraOff, RefreshCw, FlipHorizontal, Timer, Sparkles, Info, SwitchCamera } from 'lucide-react';
 import { FrameTemplate, FilterType, FILTERS } from '@/app/photobooth/framesData';
 
 interface CameraStudioViewProps {
@@ -22,6 +22,8 @@ interface CameraStudioViewProps {
   onToggleTimer: () => void;
   isMirrored: boolean;
   onToggleMirror: () => void;
+  facingMode: 'user' | 'environment';
+  onToggleCameraFacing: () => void;
   onTriggerShutter: () => void;
   isCapturing: boolean;
 }
@@ -44,6 +46,8 @@ export const CameraStudioView: React.FC<CameraStudioViewProps> = ({
   onToggleTimer,
   isMirrored,
   onToggleMirror,
+  facingMode,
+  onToggleCameraFacing,
   onTriggerShutter,
   isCapturing,
 }) => {
@@ -98,11 +102,18 @@ export const CameraStudioView: React.FC<CameraStudioViewProps> = ({
           <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between pointer-events-none">
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md bg-black/60 border border-white/10 text-xs font-bold text-white shadow-lg">
               <span className={`w-2.5 h-2.5 rounded-full ${isStreaming ? 'bg-emerald-500 animate-pulse' : 'bg-yellow-400 animate-ping'}`} />
-              <span>{isStreaming ? 'Kamera aktif' : 'Menghubungkan...'}</span>
+              <span>{isStreaming ? (facingMode === 'user' ? 'Kamera Depan' : 'Kamera Belakang') : 'Menghubungkan...'}</span>
             </div>
-            <div className="hidden sm:flex text-xs font-semibold text-white/70 backdrop-blur-md bg-black/40 px-3 py-1.5 rounded-full border border-white/10">
-              Pastikan wajah terlihat jelas
-            </div>
+            <button
+              type="button"
+              onClick={onToggleCameraFacing}
+              disabled={isCapturing}
+              aria-label={`Ganti ke kamera ${facingMode === 'user' ? 'belakang' : 'depan'}`}
+              className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-md bg-black/60 hover:bg-black/80 active:scale-95 border border-white/20 text-xs font-bold text-white shadow-lg transition-all cursor-pointer disabled:opacity-50 min-h-[36px]"
+            >
+              <SwitchCamera size={14} className="text-pink-400" />
+              <span>{facingMode === 'user' ? 'Ganti ke Belakang' : 'Ganti ke Depan'}</span>
+            </button>
           </div>
 
           {/* Countdown Center Overlay */}
@@ -168,33 +179,52 @@ export const CameraStudioView: React.FC<CameraStudioViewProps> = ({
 
         {/* Viewfinder Bottom Controls Bar */}
         <div
-          className="w-full rounded-2xl p-4 border flex items-center justify-between"
+          className="w-full rounded-2xl p-3 sm:p-4 border flex items-center justify-between gap-2"
           style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
         >
-          {/* Timer Toggle */}
-          <button
-            onClick={onToggleTimer}
-            disabled={isCapturing}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer hover:opacity-80 disabled:opacity-50"
-            style={{ background: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
-          >
-            <Timer size={16} />
-            <span>Timer ({timerDuration}s)</span>
-          </button>
+          {/* Left Controls: Timer & Camera Switch */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onToggleTimer}
+              disabled={isCapturing}
+              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 min-h-[44px] rounded-xl text-xs font-bold border transition-all cursor-pointer hover:opacity-80 disabled:opacity-50"
+              style={{ background: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
+            >
+              <Timer size={16} />
+              <span className="hidden sm:inline">Timer</span>
+              <span>({timerDuration}s)</span>
+            </button>
+
+            <button
+              onClick={onToggleCameraFacing}
+              disabled={isCapturing}
+              aria-label={`Ganti kamera ke ${facingMode === 'user' ? 'belakang' : 'depan'}`}
+              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 min-h-[44px] rounded-xl text-xs font-bold border transition-all cursor-pointer hover:opacity-80 disabled:opacity-50"
+              style={{
+                background: facingMode === 'environment' ? 'rgba(255, 46, 126, 0.15)' : 'var(--muted)',
+                borderColor: facingMode === 'environment' ? 'var(--primary)' : 'var(--border)',
+                color: facingMode === 'environment' ? 'var(--primary)' : 'var(--foreground)',
+              }}
+            >
+              <SwitchCamera size={16} />
+              <span className="hidden md:inline">Kamera:</span>
+              <span>{facingMode === 'user' ? 'Depan' : 'Belakang'}</span>
+            </button>
+          </div>
 
           {/* Big Circular Shutter Button */}
           <button
             onClick={onTriggerShutter}
             disabled={isCapturing || !!cameraError}
             aria-label="Ambil Foto"
-            className="group relative flex items-center justify-center p-1.5 rounded-full transition-all duration-300 hover:scale-110 active:scale-95 disabled:opacity-50 cursor-pointer"
+            className="group relative flex items-center justify-center p-1.5 rounded-full transition-all duration-300 hover:scale-110 active:scale-95 disabled:opacity-50 cursor-pointer shrink-0"
             style={{
               background: 'transparent',
               border: '4px solid var(--primary)',
             }}
           >
             <div
-              className={`w-14 h-14 rounded-full transition-all duration-300 ${
+              className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full transition-all duration-300 ${
                 isCapturing ? 'animate-pulse scale-90' : 'group-hover:scale-95'
               }`}
               style={{ background: 'var(--primary)' }}
@@ -204,7 +234,7 @@ export const CameraStudioView: React.FC<CameraStudioViewProps> = ({
           {/* Mirror Flip Toggle */}
           <button
             onClick={onToggleMirror}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer hover:opacity-80"
+            className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 min-h-[44px] rounded-xl text-xs font-bold border transition-all cursor-pointer hover:opacity-80"
             style={{
               background: isMirrored ? 'rgba(255, 46, 126, 0.15)' : 'var(--muted)',
               borderColor: isMirrored ? 'var(--primary)' : 'var(--border)',
@@ -212,7 +242,7 @@ export const CameraStudioView: React.FC<CameraStudioViewProps> = ({
             }}
           >
             <FlipHorizontal size={16} />
-            <span>Mirror</span>
+            <span className="hidden sm:inline">Mirror</span>
           </button>
         </div>
       </div>
