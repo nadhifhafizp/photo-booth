@@ -29,6 +29,7 @@ export interface FrameTemplate {
   coordinates: PhotoCoordinate[];
   defaultFilter?: FilterType;
   used?: number;
+  hasCustomFooter?: boolean;
 }
 
 export const REAL_TEMPLATES: FrameTemplate[] = [
@@ -2060,7 +2061,7 @@ export const REAL_TEMPLATES: FrameTemplate[] = [
   },
   {
     "id": 1640,
-    "name": "Rsyqiera",
+    "name": "Momen Meow (Luxury Edition)",
     "category": "Cute",
     "width": 338,
     "height": 1024,

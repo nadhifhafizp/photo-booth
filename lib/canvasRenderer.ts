@@ -158,8 +158,15 @@ export function drawPhotoboothWatermark(
   tpl: FrameTemplate
 ) {
   try {
-    // If the frame overlay graphic already includes the official Snaporia branding, skip double stamping
-    if (tpl.id === 150 || tpl.id === 148) {
+    // Skip frames that already have integrated official Snaporia branding or rich interactive UI controls
+    // to prevent watermark text from blindly covering essential design elements (e.g. shutter button, music player, barcodes)
+    const FRAMES_WITH_CUSTOM_OR_INTEGRATED_FOOTER = new Set<number | string>([
+      150, 148, 147, 149, 292, 306, 304, 321, 309, 136, 1221,
+      131, 132, 133, 134, 1640, 390, 727,
+      146, 144, 145, 142, 630, 80, 432, 1302, 457, 1480, 325, 154
+    ]);
+
+    if (FRAMES_WITH_CUSTOM_OR_INTEGRATED_FOOTER.has(Number(tpl.id)) || FRAMES_WITH_CUSTOM_OR_INTEGRATED_FOOTER.has(tpl.id) || tpl.hasCustomFooter) {
       return;
     }
 
