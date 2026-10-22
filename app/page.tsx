@@ -267,42 +267,42 @@ export default function LandingPage() {
         />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center">
 
             {/* Left Column: Big Headlines & Badges (7 cols) */}
-            <div className="lg:col-span-7 flex flex-col items-start gap-6">
+            <div className="lg:col-span-7 flex flex-col items-start gap-4 sm:gap-6">
 
               {/* Floating Badges */}
-              <div className="flex flex-wrap items-center gap-2.5">
-                <span className="badge-live">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                <span className="badge-live text-[11px] sm:text-xs">
                   <span className="badge-dot" />
                   <span>● LIVE BOOTH</span>
                 </span>
-                <span className="chip-brutal bg-yellow text-ink border-ink">
-                  ✦ 60+ VIRAL FRAMES
+                <span className="chip-brutal bg-yellow text-ink border-ink text-[11px] sm:text-xs">
+                  ✦ 80+ VIRAL FRAMES
                 </span>
-                <span className="chip-brutal bg-white text-ink border-ink">
+                <span className="chip-brutal bg-white text-ink border-ink text-[11px] sm:text-xs">
                   ⚡ 100% FREE
                 </span>
               </div>
 
               {/* Giant Headline */}
-              <h1 className="font-display text-5xl sm:text-7xl lg:text-8xl leading-[0.92] tracking-tight uppercase text-white">
+              <h1 className="font-display text-4xl sm:text-7xl lg:text-8xl leading-[0.92] tracking-tight uppercase text-white">
                 SNAP YOUR <em className="accent-lime">moment</em>.<br />
                 STRIP IT. SHARE IT.
               </h1>
 
               {/* Punchy Subheadline */}
-              <p className="text-base sm:text-lg text-white/90 max-w-xl font-normal leading-relaxed">
-                Photobooth online aesthetic ala Korea dengan 60+ frame Gen Z, filter kamera real-time, dan unduhan photostrip HD instan langsung dari browsermu.
+              <p className="text-sm sm:text-base md:text-lg text-white/90 max-w-xl font-normal leading-relaxed">
+                Photobooth online aesthetic ala Korea dengan 80+ frame viral, filter kamera real-time, dan unduhan photostrip HD instan langsung dari browsermu.
               </p>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap items-center gap-4 pt-2">
+              <div className="flex flex-col sm:flex-row w-full sm:w-auto items-stretch sm:items-center gap-3 sm:gap-4 pt-1 sm:pt-2">
                 <Link
                   href="/photobooth"
                   onClick={playClickSound}
-                  className="btn-brutal text-base sm:text-lg py-4 px-8 shadow-stk"
+                  className="btn-brutal text-sm sm:text-lg py-3.5 sm:py-4 px-6 sm:px-8 shadow-stk text-center justify-center min-h-[48px]"
                 >
                   <span>Start booth</span>
                   <span>↗</span>
@@ -311,7 +311,7 @@ export default function LandingPage() {
                 <a
                   href="#templates"
                   onClick={playClickSound}
-                  className="btn-brutal btn-brutal-ghost text-base sm:text-lg py-4 px-8 text-white border-white shadow-[4px_4px_0_#ffffff]"
+                  className="btn-brutal btn-brutal-ghost text-sm sm:text-lg py-3.5 sm:py-4 px-6 sm:px-8 text-white border-white shadow-[4px_4px_0_#ffffff] text-center justify-center min-h-[48px]"
                 >
                   <span>See frames</span>
                   <span>⟶</span>
@@ -319,7 +319,7 @@ export default function LandingPage() {
               </div>
 
               {/* Editorial micro info */}
-              <div className="flex items-center gap-4 pt-4 text-xs font-editorial-mono text-white/70">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4 pt-2 sm:pt-4 text-[10px] sm:text-xs font-editorial-mono text-white/70">
                 <span>◎ CLIENT-SIDE RENDER</span>
                 <span>•</span>
                 <span>✓ NO SIGNUP REQUIRED</span>
@@ -329,10 +329,10 @@ export default function LandingPage() {
             </div>
 
             {/* Right Column: Tilted Realistic Photostrip Mockup (5 cols) */}
-            <div className="lg:col-span-5 flex justify-center lg:justify-end relative">
+            <div className="lg:col-span-5 flex justify-center lg:justify-end relative mt-2 sm:mt-0">
               {/* Floating Sticker 1 */}
               <div
-                className="absolute -top-6 -left-4 sm:left-4 z-20 animate-sticker-float-1 bg-yellow text-ink font-mono font-bold text-xs px-3 py-1.5 rounded-full border-2 border-ink shadow-stk-sm"
+                className="absolute -top-4 left-0 sm:-top-6 sm:left-4 z-20 animate-sticker-float-1 bg-yellow text-ink font-mono font-bold text-[10px] sm:text-xs px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border-2 border-ink shadow-stk-sm"
                 style={{ '--rot': '-8deg' } as React.CSSProperties}
               >
                 ★ READY IN 30S
@@ -340,7 +340,7 @@ export default function LandingPage() {
 
               {/* Floating Sticker 2 */}
               <div
-                className="absolute -bottom-4 right-2 sm:right-10 z-20 animate-sticker-float-2 bg-pink text-white font-mono font-bold text-xs px-3 py-1.5 rounded-full border-2 border-ink shadow-stk-sm"
+                className="absolute -bottom-3 right-0 sm:-bottom-4 sm:right-10 z-20 animate-sticker-float-2 bg-pink text-white font-mono font-bold text-[10px] sm:text-xs px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border-2 border-ink shadow-stk-sm"
                 style={{ '--rot': '6deg' } as React.CSSProperties}
               >
                 📸 4 POSES STRIP
@@ -348,15 +348,15 @@ export default function LandingPage() {
 
               {/* Neo-brutalist Strip Card Showcase */}
               <div
-                className="relative bg-white text-ink p-4 sm:p-5 rounded-3xl border-[3px] border-ink shadow-[12px_12px_0_#0e0b1f] -rotate-2 hover:rotate-0 transition-transform duration-300 max-w-xs w-full"
+                className="relative bg-white text-ink p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border-[2.5px] sm:border-[3px] border-ink shadow-[8px_8px_0_#0e0b1f] sm:shadow-[12px_12px_0_#0e0b1f] rotate-0 sm:-rotate-2 hover:rotate-0 transition-transform duration-300 max-w-xs w-full"
               >
-                <div className="flex items-center justify-between pb-3 border-b-2 border-ink mb-3">
+                <div className="flex items-center justify-between pb-2.5 sm:pb-3 border-b-2 border-ink mb-2.5 sm:mb-3">
                   <span className="font-editorial-mono font-bold text-[10px] text-brand">001 / PREVIEW STRIP</span>
                   <span className="font-mono text-[10px] text-muted">2026.10</span>
                 </div>
 
                 {/* 4 Photo Frames Stack */}
-                <div className="flex flex-col gap-2.5 bg-paper p-2.5 rounded-2xl border-2 border-ink">
+                <div className="flex flex-col gap-2 sm:gap-2.5 bg-paper p-2 sm:p-2.5 rounded-xl sm:rounded-2xl border-2 border-ink">
                   {[
                     { label: 'POSE 01', filter: 'grayscale(100%)' },
                     { label: 'POSE 02', filter: 'sepia(40%)' },
@@ -365,12 +365,12 @@ export default function LandingPage() {
                   ].map((pose, i) => (
                     <div
                       key={i}
-                      className="relative aspect-[16/10] bg-brand-tint rounded-xl border-2 border-ink overflow-hidden flex items-center justify-center"
+                      className="relative aspect-[16/10] bg-brand-tint rounded-lg sm:rounded-xl border-2 border-ink overflow-hidden flex items-center justify-center"
                     >
                       <div
                         className="absolute inset-0 bg-gradient-to-br from-[#ece8ff] via-[#dcd5ff] to-[#c6b8ff]"
                       />
-                      <span className="relative z-10 font-mono text-[10px] font-bold px-2 py-0.5 rounded-md bg-ink text-white shadow-sm">
+                      <span className="relative z-10 font-mono text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-md bg-ink text-white shadow-sm">
                         {pose.label}
                       </span>
                     </div>
@@ -378,7 +378,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Strip Footer */}
-                <div className="pt-3 mt-3 border-t-2 border-ink flex items-center justify-between font-mono text-[10px] font-bold">
+                <div className="pt-2.5 sm:pt-3 mt-2.5 sm:mt-3 border-t-2 border-ink flex items-center justify-between font-mono text-[9px] sm:text-[10px] font-bold">
                   <span>✦ SNAPORIA BOOTH</span>
                   <span className="text-brand">HD 300DPI</span>
                 </div>

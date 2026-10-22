@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Sparkles } from 'lucide-react';
 import { REAL_TEMPLATES, DEFAULT_FALLBACK_TEMPLATE, FrameTemplate, FilterType, FILTERS } from './framesData';
 import { renderRealStrip, logger } from '@/lib/canvasRenderer';
+import { generatePhotoboothGif } from '@/lib/gifRenderer';
 import { HeaderStepper } from '@/components/photobooth/HeaderStepper';
 import { TemplateCatalogView } from '@/components/photobooth/TemplateCatalogView';
 import { CameraStudioView } from '@/components/photobooth/CameraStudioView';
@@ -23,6 +24,7 @@ export default function PhotoboothPage() {
   const [stream, setStream]             = useState<MediaStream | null>(null);
   const [photos, setPhotos]             = useState<string[]>([]);
   const [finalImage, setFinalImage]     = useState<string | null>(null);
+  const [finalGif, setFinalGif]         = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
   // Template & filter preferences
@@ -307,7 +309,7 @@ export default function PhotoboothPage() {
     const filledCount = updatedPhotos.filter(Boolean).length;
 
     if (filledCount >= neededCount) {
-      // All photos ready -> Generate photostrip
+      // All photos ready -> Generate photostrip & animated GIF
       setIsGenerating(true);
       stream?.getTracks().forEach(t => t.stop());
       setStream(null);
@@ -317,8 +319,22 @@ export default function PhotoboothPage() {
 
       setTimeout(async () => {
         try {
-          await renderRealStrip(canvasRef.current!, updatedPhotos, currentTpl, currentFilter);
-          setFinalImage(canvasRef.current!.toDataURL('image/png', 1.0));
+          const [stripResult, gifResult] = await Promise.all([
+            renderRealStrip(canvasRef.current!, updatedPhotos, currentTpl, currentFilter).then(() =>
+              canvasRef.current!.toDataURL('image/png', 1.0)
+            ),
+            generatePhotoboothGif({
+              photos: updatedPhotos,
+              filter: currentFilter,
+              templateName: currentTpl.name,
+            }).catch(err => {
+              logger.error('Gagal membuat GIF:', err);
+              return null;
+            }),
+          ]);
+
+          setFinalImage(stripResult);
+          if (gifResult) setFinalGif(gifResult);
           setStep('result');
         } catch (err) {
           logger.error('Gagal generate strip photobooth:', err);
@@ -381,8 +397,22 @@ export default function PhotoboothPage() {
     setSelectedFilter(filter);
     setIsGenerating(true);
     try {
-      await renderRealStrip(canvasRef.current!, photosRef.current, selectedTpl, filter);
-      setFinalImage(canvasRef.current!.toDataURL('image/png', 1.0));
+      const [stripResult, gifResult] = await Promise.all([
+        renderRealStrip(canvasRef.current!, photosRef.current, selectedTpl, filter).then(() =>
+          canvasRef.current!.toDataURL('image/png', 1.0)
+        ),
+        generatePhotoboothGif({
+          photos: photosRef.current,
+          filter: filter,
+          templateName: selectedTpl.name,
+        }).catch(err => {
+          logger.error('Gagal update GIF:', err);
+          return null;
+        }),
+      ]);
+
+      setFinalImage(stripResult);
+      if (gifResult) setFinalGif(gifResult);
     } catch (e) {
       logger.error('Gagal switch filter:', e);
     } finally {
@@ -400,9 +430,20 @@ export default function PhotoboothPage() {
     logger.info('Hasil photostrip Snaporia berhasil diunduh.');
   };
 
+  const downloadGif = () => {
+    if (!finalGif) return;
+    const cleanTplName = selectedTpl.name.replace(/^[^\w\s]+/, '').replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+    const a = document.createElement('a');
+    a.href = finalGif;
+    a.download = `snaporia-motion-${cleanTplName}-${Date.now()}.gif`;
+    a.click();
+    logger.info('Hasil animated GIF Snaporia berhasil diunduh.');
+  };
+
   const reset = () => {
     logger.info('Reset sesi Snaporia.');
     setFinalImage(null);
+    setFinalGif(null);
     setPhotos([]);
     photosRef.current = [];
     setPendingReviewPhoto(null);
@@ -502,10 +543,12 @@ export default function PhotoboothPage() {
         {step === 'result' && finalImage && (
           <ResultCelebrationView
             finalImage={finalImage}
+            finalGif={finalGif}
             selectedTpl={selectedTpl}
             templates={REAL_TEMPLATES}
             onSwitchTemplate={switchTemplateInResult}
             onDownload={download}
+            onDownloadGif={downloadGif}
             onReset={reset}
             selectedFilter={selectedFilter}
             onChangeFilter={switchFilterInResult}
