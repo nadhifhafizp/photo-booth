@@ -4,6 +4,8 @@ import React from 'react';
 import Link from 'next/link';
 import { ChevronLeft, RotateCcw, X } from 'lucide-react';
 import { SnaporiaLogo } from '@/components/SnaporiaLogo';
+import { SfxToggle } from '@/components/SfxToggle';
+import { playClickSound } from '@/lib/sfx';
 
 interface HeaderStepperProps {
   step: 'setup' | 'capturing' | 'result';
@@ -21,96 +23,127 @@ export const HeaderStepper: React.FC<HeaderStepperProps> = ({
   canViewResult = false,
 }) => {
   return (
-    <header className="w-full border-b sticky top-0 z-40 backdrop-blur-md px-4 md:px-8 py-3.5 flex items-center justify-between"
-      style={{ background: 'rgba(10, 10, 10, 0.85)', borderColor: 'var(--border)' }}>
-      {/* Brand Logo */}
-      <div className="flex items-center gap-4">
+    <header className="w-full border-b-[2.5px] border-ink sticky top-0 z-40 bg-paper/95 backdrop-blur-md px-4 md:px-8 py-3.5 flex items-center justify-between">
+      {/* Brand Logo / Back Button */}
+      <div className="flex items-center gap-3">
         {step === 'capturing' && onBackToTemplates && (
           <button
-            onClick={onBackToTemplates}
-            className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition cursor-pointer"
+            type="button"
+            onClick={() => {
+              playClickSound();
+              onBackToTemplates();
+            }}
+            className="btn-brutal btn-brutal-white text-xs py-1.5 px-3 min-h-[36px]"
           >
-            <ChevronLeft size={16} /> Ganti template
+            <ChevronLeft size={14} />
+            <span>Ganti template</span>
           </button>
         )}
         {(step === 'setup' || step === 'result') && (
-          <Link href="/" className="hover:opacity-90 transition-opacity">
+          <Link href="/" onClick={playClickSound} className="focus:outline-none">
             <SnaporiaLogo size="sm" />
           </Link>
         )}
       </div>
 
-      {/* Center Stepper Pills */}
-      <nav aria-label="Langkah alur" className="flex items-center gap-2 text-xs font-semibold">
+      {/* Center Stepper Pills (Neo-brutalist) */}
+      <nav aria-label="Alur langkah photobooth" className="flex items-center gap-1.5 sm:gap-2">
+        {/* Step 1 */}
         <button
-          onClick={() => onGoToStep?.('setup')}
-          className={`px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
+          type="button"
+          onClick={() => {
+            playClickSound();
+            onGoToStep?.('setup');
+          }}
+          className={`px-3 py-1.5 rounded-full border-2 border-ink font-mono text-xs font-bold transition-all cursor-pointer ${
             step === 'setup'
-              ? 'text-white shadow-sm font-bold'
-              : 'text-muted-foreground hover:text-foreground'
+              ? 'bg-brand text-white shadow-stk-sm'
+              : 'bg-white text-ink/70 hover:text-ink'
           }`}
-          style={{ background: step === 'setup' ? 'var(--primary)' : 'transparent' }}
         >
-          <span>1. Template</span>
+          <span>01 / TEMPLATE</span>
         </button>
 
-        <span className="text-neutral-500 text-xs">→</span>
+        <span className="text-ink font-mono font-bold text-xs">⟶</span>
 
+        {/* Step 2 */}
         <button
-          onClick={() => onGoToStep?.('capturing')}
-          className={`px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
+          type="button"
+          onClick={() => {
+            playClickSound();
+            onGoToStep?.('capturing');
+          }}
+          className={`px-3 py-1.5 rounded-full border-2 border-ink font-mono text-xs font-bold transition-all cursor-pointer ${
             step === 'capturing'
-              ? 'text-white shadow-sm font-bold'
-              : 'text-muted-foreground hover:text-foreground'
+              ? 'bg-brand text-white shadow-stk-sm'
+              : 'bg-white text-ink/70 hover:text-ink'
           }`}
-          style={{ background: step === 'capturing' ? 'var(--primary)' : 'transparent' }}
         >
-          <span>2. Foto (Kamera)</span>
+          <span>02 / STUDIO</span>
         </button>
 
-        <span className="text-neutral-500 text-xs">→</span>
+        <span className="text-ink font-mono font-bold text-xs">⟶</span>
 
+        {/* Step 3 */}
         <button
-          onClick={() => canViewResult && onGoToStep?.('result')}
+          type="button"
+          onClick={() => {
+            if (canViewResult) {
+              playClickSound();
+              onGoToStep?.('result');
+            }
+          }}
           disabled={!canViewResult}
-          className={`px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1 ${
+          className={`px-3 py-1.5 rounded-full border-2 border-ink font-mono text-xs font-bold transition-all ${
             step === 'result'
-              ? 'text-white shadow-sm font-bold cursor-pointer'
+              ? 'bg-brand text-white shadow-stk-sm cursor-pointer'
               : canViewResult
-              ? 'text-muted-foreground hover:text-foreground cursor-pointer'
-              : 'text-muted-foreground/40 cursor-not-allowed'
+              ? 'bg-white text-ink/70 hover:text-ink cursor-pointer'
+              : 'bg-ink/5 text-ink/30 border-dashed cursor-not-allowed shadow-none'
           }`}
-          style={{ background: step === 'result' ? 'var(--primary)' : 'transparent' }}
         >
-          <span>3. Hasil</span>
+          <span>03 / RESULT</span>
         </button>
       </nav>
 
-      {/* Right Action */}
+      {/* Right Action & SFX */}
       <div className="flex items-center gap-3">
+        <SfxToggle className="hidden sm:inline-flex" />
+
         {step === 'setup' && (
           <Link
             href="/"
-            className="flex items-center gap-1 text-xs font-bold text-muted-foreground hover:text-foreground transition"
+            onClick={playClickSound}
+            className="btn-brutal btn-brutal-white text-xs py-1.5 px-3 min-h-[36px]"
           >
-            <X size={14} /> Keluar
+            <X size={14} />
+            <span>Keluar</span>
           </Link>
         )}
         {step === 'capturing' && (
           <button
-            onClick={onBackToTemplates}
-            className="flex items-center gap-1 text-xs font-bold text-muted-foreground hover:text-foreground transition cursor-pointer"
+            type="button"
+            onClick={() => {
+              playClickSound();
+              onBackToTemplates?.();
+            }}
+            className="btn-brutal btn-brutal-white text-xs py-1.5 px-3 min-h-[36px]"
           >
-            <X size={14} /> Batal
+            <X size={14} />
+            <span>Batal</span>
           </button>
         )}
         {step === 'result' && onResetSession && (
           <button
-            onClick={onResetSession}
-            className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition flex items-center gap-1.5 cursor-pointer hover:opacity-80"
-            style={{ borderColor: 'var(--border)', background: 'var(--card)', color: 'var(--foreground)' }}
+            type="button"
+            onClick={() => {
+              playClickSound();
+              onResetSession();
+            }}
+            className="btn-brutal btn-brutal-white text-xs py-1.5 px-3 min-h-[36px]"
           >
-            <RotateCcw size={13} /> Mulai lagi
+            <RotateCcw size={13} />
+            <span>Foto lagi</span>
           </button>
         )}
       </div>

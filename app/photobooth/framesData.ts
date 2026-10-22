@@ -1,4 +1,4 @@
-// Curated Gen Z Aesthetic Frame Database (60 frames)
+// Curated Aesthetic Photobooth Frames Database (82 frames)
 export type FilterType = 'normal' | 'bnw' | 'warm' | 'soft';
 
 export const FILTERS: { id: FilterType; label: string; css: string; canvas: string }[] = [
@@ -29,10 +29,903 @@ export interface FrameTemplate {
   coordinates: PhotoCoordinate[];
   defaultFilter?: FilterType;
   used?: number;
-  hasCustomFooter?: boolean;
 }
 
+export const DEFAULT_FALLBACK_TEMPLATE: FrameTemplate = {
+  id: 'standard-strip-4',
+  name: 'Standard Strip 4-Poses',
+  category: 'Classic',
+  width: 788,
+  height: 2363,
+  totalPhoto: 4,
+  thumb: '',
+  template: '',
+  coordinates: [
+    { id: 1, x: 28, y: 356, width: 730, height: 458, rotate: 0 },
+    { id: 2, x: 28, y: 833, width: 730, height: 459, rotate: 0 },
+    { id: 3, x: 28, y: 1310, width: 730, height: 458, rotate: 0 },
+    { id: 4, x: 28, y: 1787, width: 730, height: 458, rotate: 0 },
+  ],
+  defaultFilter: 'bnw',
+};
+
 export const REAL_TEMPLATES: FrameTemplate[] = [
+  {
+    "id": "polaroid",
+    "name": "Retro Polaroid Classic (1-Pose)",
+    "category": "Vintage",
+    "width": 1080,
+    "height": 1350,
+    "totalPhoto": 1,
+    "thumb": "/images/frames/thumb_polaroid.webp",
+    "template": "/images/frames/template_polaroid.webp",
+    "coordinates": [
+      {
+        "id": 1,
+        "x": 80,
+        "y": 80,
+        "width": 920,
+        "height": 920,
+        "rotate": 0
+      }
+    ],
+    "defaultFilter": "soft",
+    "used": 999
+  },
+  {
+    "id": "polaroid-black",
+    "name": "Retro Polaroid Noir (1-Pose)",
+    "category": "Vintage",
+    "width": 1080,
+    "height": 1350,
+    "totalPhoto": 1,
+    "thumb": "/images/frames/thumb_polaroid-black.webp",
+    "template": "/images/frames/template_polaroid-black.webp",
+    "coordinates": [
+      {
+        "id": 1,
+        "x": 80,
+        "y": 80,
+        "width": 920,
+        "height": 920,
+        "rotate": 0
+      }
+    ],
+    "defaultFilter": "bnw",
+    "used": 999
+  },
+  {
+    "id": "polaroid-duo",
+    "name": "Retro Polaroid Duo (2-Poses)",
+    "category": "Vintage",
+    "width": 788,
+    "height": 2363,
+    "totalPhoto": 2,
+    "thumb": "/images/frames/thumb_polaroid-duo.webp",
+    "template": "/images/frames/template_polaroid-duo.webp",
+    "coordinates": [
+      {
+        "id": 1,
+        "x": 64,
+        "y": 180,
+        "width": 660,
+        "height": 660,
+        "rotate": 0
+      },
+      {
+        "id": 2,
+        "x": 64,
+        "y": 1180,
+        "width": 660,
+        "height": 660,
+        "rotate": 0
+      }
+    ],
+    "defaultFilter": "warm",
+    "used": 999
+  },
+  {
+    "id": "grid-2x2",
+    "name": "Quad Grid 2×2 (Social Edition)",
+    "category": "Grid",
+    "width": 1200,
+    "height": 1500,
+    "totalPhoto": 4,
+    "thumb": "/images/frames/thumb_grid-2x2.webp",
+    "template": "/images/frames/template_grid-2x2.webp",
+    "coordinates": [
+      {
+        "id": 1,
+        "x": 70,
+        "y": 200,
+        "width": 510,
+        "height": 510,
+        "rotate": 0
+      },
+      {
+        "id": 2,
+        "x": 620,
+        "y": 200,
+        "width": 510,
+        "height": 510,
+        "rotate": 0
+      },
+      {
+        "id": 3,
+        "x": 70,
+        "y": 750,
+        "width": 510,
+        "height": 510,
+        "rotate": 0
+      },
+      {
+        "id": 4,
+        "x": 620,
+        "y": 750,
+        "width": 510,
+        "height": 510,
+        "rotate": 0
+      }
+    ],
+    "defaultFilter": "normal",
+    "used": 999
+  },
+  {
+    "id": "strip-4x1",
+    "name": "Classic Strip 4×1 (Retro Red)",
+    "category": "Photostrip",
+    "width": 788,
+    "height": 2363,
+    "totalPhoto": 4,
+    "thumb": "/images/frames/thumb_strip-4x1.webp",
+    "template": "/images/frames/template_strip-4x1.webp",
+    "coordinates": [
+      {
+        "id": 1,
+        "x": 50,
+        "y": 220,
+        "width": 688,
+        "height": 440,
+        "rotate": 0
+      },
+      {
+        "id": 2,
+        "x": 50,
+        "y": 720,
+        "width": 688,
+        "height": 440,
+        "rotate": 0
+      },
+      {
+        "id": 3,
+        "x": 50,
+        "y": 1220,
+        "width": 688,
+        "height": 440,
+        "rotate": 0
+      },
+      {
+        "id": 4,
+        "x": 50,
+        "y": 1720,
+        "width": 688,
+        "height": 440,
+        "rotate": 0
+      }
+    ],
+    "defaultFilter": "bnw",
+    "used": 999
+  },
+  {
+    "id": "wide-3x1",
+    "name": "Cinematic Trio 3×1 (Editorial)",
+    "category": "Modern",
+    "width": 1080,
+    "height": 1920,
+    "totalPhoto": 3,
+    "thumb": "/images/frames/thumb_wide-3x1.webp",
+    "template": "/images/frames/template_wide-3x1.webp",
+    "coordinates": [
+      {
+        "id": 1,
+        "x": 60,
+        "y": 240,
+        "width": 960,
+        "height": 460,
+        "rotate": 0
+      },
+      {
+        "id": 2,
+        "x": 60,
+        "y": 760,
+        "width": 960,
+        "height": 460,
+        "rotate": 0
+      },
+      {
+        "id": 3,
+        "x": 60,
+        "y": 1280,
+        "width": 960,
+        "height": 460,
+        "rotate": 0
+      }
+    ],
+    "defaultFilter": "normal",
+    "used": 999
+  },
+  {
+    "id": 2001,
+    "name": "The Daily Times (Special Edition)",
+    "category": "Newspaper",
+    "width": 788,
+    "height": 2363,
+    "totalPhoto": 3,
+    "thumb": "/images/frames/thumb_2001.webp",
+    "template": "/images/frames/template_2001.webp",
+    "coordinates": [
+      {
+        "id": 1,
+        "x": 44,
+        "y": 340,
+        "width": 700,
+        "height": 490,
+        "rotate": 0
+      },
+      {
+        "id": 2,
+        "x": 44,
+        "y": 910,
+        "width": 700,
+        "height": 490,
+        "rotate": 0
+      },
+      {
+        "id": 3,
+        "x": 44,
+        "y": 1480,
+        "width": 700,
+        "height": 490,
+        "rotate": 0
+      }
+    ],
+    "defaultFilter": "bnw",
+    "used": 500
+  },
+  {
+    "id": 2002,
+    "name": "The Sunday Chronicle",
+    "category": "Newspaper",
+    "width": 788,
+    "height": 2363,
+    "totalPhoto": 4,
+    "thumb": "/images/frames/thumb_2002.webp",
+    "template": "/images/frames/template_2002.webp",
+    "coordinates": [
+      {
+        "id": 1,
+        "x": 44,
+        "y": 240,
+        "width": 700,
+        "height": 410,
+        "rotate": 0
+      },
+      {
+        "id": 2,
+        "x": 44,
+        "y": 690,
+        "width": 700,
+        "height": 410,
+        "rotate": 0
+      },
+      {
+        "id": 3,
+        "x": 44,
+        "y": 1140,
+        "width": 700,
+        "height": 410,
+        "rotate": 0
+      },
+      {
+        "id": 4,
+        "x": 44,
+        "y": 1590,
+        "width": 700,
+        "height": 410,
+        "rotate": 0
+      }
+    ],
+    "defaultFilter": "bnw",
+    "used": 500
+  },
+  {
+    "id": 2003,
+    "name": "Editorial Gazette Haute",
+    "category": "Newspaper",
+    "width": 788,
+    "height": 2363,
+    "totalPhoto": 3,
+    "thumb": "/images/frames/thumb_2003.webp",
+    "template": "/images/frames/template_2003.webp",
+    "coordinates": [
+      {
+        "id": 1,
+        "x": 50,
+        "y": 310,
+        "width": 688,
+        "height": 510,
+        "rotate": 0
+      },
+      {
+        "id": 2,
+        "x": 50,
+        "y": 880,
+        "width": 688,
+        "height": 510,
+        "rotate": 0
+      },
+      {
+        "id": 3,
+        "x": 50,
+        "y": 1450,
+        "width": 688,
+        "height": 510,
+        "rotate": 0
+      }
+    ],
+    "defaultFilter": "bnw",
+    "used": 500
+  },
+  {
+    "id": 2004,
+    "name": "Midnight Gazette (Noir Edition)",
+    "category": "Newspaper",
+    "width": 788,
+    "height": 2363,
+    "totalPhoto": 4,
+    "thumb": "/images/frames/thumb_2004.webp",
+    "template": "/images/frames/template_2004.webp",
+    "coordinates": [
+      {
+        "id": 1,
+        "x": 44,
+        "y": 250,
+        "width": 700,
+        "height": 410,
+        "rotate": 0
+      },
+      {
+        "id": 2,
+        "x": 44,
+        "y": 700,
+        "width": 700,
+        "height": 410,
+        "rotate": 0
+      },
+      {
+        "id": 3,
+        "x": 44,
+        "y": 1150,
+        "width": 700,
+        "height": 410,
+        "rotate": 0
+      },
+      {
+        "id": 4,
+        "x": 44,
+        "y": 1600,
+        "width": 700,
+        "height": 410,
+        "rotate": 0
+      }
+    ],
+    "defaultFilter": "bnw",
+    "used": 500
+  },
+  {
+    "id": 2005,
+    "name": "Spotify Player (Now Playing)",
+    "category": "Music",
+    "width": 788,
+    "height": 2363,
+    "totalPhoto": 3,
+    "thumb": "/images/frames/thumb_2005.webp",
+    "template": "/images/frames/template_2005.webp",
+    "coordinates": [
+      {
+        "id": 1,
+        "x": 50,
+        "y": 200,
+        "width": 688,
+        "height": 490,
+        "rotate": 0
+      },
+      {
+        "id": 2,
+        "x": 50,
+        "y": 730,
+        "width": 688,
+        "height": 490,
+        "rotate": 0
+      },
+      {
+        "id": 3,
+        "x": 50,
+        "y": 1260,
+        "width": 688,
+        "height": 490,
+        "rotate": 0
+      }
+    ],
+    "defaultFilter": "normal",
+    "used": 500
+  },
+  {
+    "id": 2006,
+    "name": "Retro Cassette Mixtape 90s",
+    "category": "Music",
+    "width": 788,
+    "height": 2363,
+    "totalPhoto": 3,
+    "thumb": "/images/frames/thumb_2006.webp",
+    "template": "/images/frames/template_2006.webp",
+    "coordinates": [
+      {
+        "id": 1,
+        "x": 54,
+        "y": 250,
+        "width": 680,
+        "height": 480,
+        "rotate": 0
+      },
+      {
+        "id": 2,
+        "x": 54,
+        "y": 790,
+        "width": 680,
+        "height": 480,
+        "rotate": 0
+      },
+      {
+        "id": 3,
+        "x": 54,
+        "y": 1330,
+        "width": 680,
+        "height": 480,
+        "rotate": 0
+      }
+    ],
+    "defaultFilter": "warm",
+    "used": 500
+  },
+  {
+    "id": 2007,
+    "name": "Vinyl Record 33 RPM",
+    "category": "Music",
+    "width": 788,
+    "height": 2363,
+    "totalPhoto": 4,
+    "thumb": "/images/frames/thumb_2007.webp",
+    "template": "/images/frames/template_2007.webp",
+    "coordinates": [
+      {
+        "id": 1,
+        "x": 50,
+        "y": 220,
+        "width": 688,
+        "height": 420,
+        "rotate": 0
+      },
+      {
+        "id": 2,
+        "x": 50,
+        "y": 680,
+        "width": 688,
+        "height": 420,
+        "rotate": 0
+      },
+      {
+        "id": 3,
+        "x": 50,
+        "y": 1140,
+        "width": 688,
+        "height": 420,
+        "rotate": 0
+      },
+      {
+        "id": 4,
+        "x": 50,
+        "y": 1600,
+        "width": 688,
+        "height": 420,
+        "rotate": 0
+      }
+    ],
+    "defaultFilter": "bnw",
+    "used": 500
+  },
+  {
+    "id": 2008,
+    "name": "Apple Music Lyrics & Card",
+    "category": "Music",
+    "width": 788,
+    "height": 2363,
+    "totalPhoto": 3,
+    "thumb": "/images/frames/thumb_2008.webp",
+    "template": "/images/frames/template_2008.webp",
+    "coordinates": [
+      {
+        "id": 1,
+        "x": 50,
+        "y": 220,
+        "width": 688,
+        "height": 490,
+        "rotate": 0
+      },
+      {
+        "id": 2,
+        "x": 50,
+        "y": 750,
+        "width": 688,
+        "height": 490,
+        "rotate": 0
+      },
+      {
+        "id": 3,
+        "x": 50,
+        "y": 1280,
+        "width": 688,
+        "height": 490,
+        "rotate": 0
+      }
+    ],
+    "defaultFilter": "soft",
+    "used": 500
+  },
+  {
+    "id": 2009,
+    "name": "Kodak Portra 400 (35mm Film)",
+    "category": "Vintage",
+    "width": 788,
+    "height": 2363,
+    "totalPhoto": 4,
+    "thumb": "/images/frames/thumb_2009.webp",
+    "template": "/images/frames/template_2009.webp",
+    "coordinates": [
+      {
+        "id": 1,
+        "x": 94,
+        "y": 170,
+        "width": 600,
+        "height": 460,
+        "rotate": 0
+      },
+      {
+        "id": 2,
+        "x": 94,
+        "y": 700,
+        "width": 600,
+        "height": 460,
+        "rotate": 0
+      },
+      {
+        "id": 3,
+        "x": 94,
+        "y": 1230,
+        "width": 600,
+        "height": 460,
+        "rotate": 0
+      },
+      {
+        "id": 4,
+        "x": 94,
+        "y": 1760,
+        "width": 600,
+        "height": 460,
+        "rotate": 0
+      }
+    ],
+    "defaultFilter": "warm",
+    "used": 500
+  },
+  {
+    "id": 2010,
+    "name": "Fujifilm Instax Polaroid Classic",
+    "category": "Vintage",
+    "width": 788,
+    "height": 2363,
+    "totalPhoto": 3,
+    "thumb": "/images/frames/thumb_2010.webp",
+    "template": "/images/frames/template_2010.webp",
+    "coordinates": [
+      {
+        "id": 1,
+        "x": 60,
+        "y": 160,
+        "width": 668,
+        "height": 560,
+        "rotate": 0
+      },
+      {
+        "id": 2,
+        "x": 60,
+        "y": 820,
+        "width": 668,
+        "height": 560,
+        "rotate": 0
+      },
+      {
+        "id": 3,
+        "x": 60,
+        "y": 1480,
+        "width": 668,
+        "height": 560,
+        "rotate": 0
+      }
+    ],
+    "defaultFilter": "soft",
+    "used": 500
+  },
+  {
+    "id": 2011,
+    "name": "Cinema 16mm Movie Reel",
+    "category": "Vintage",
+    "width": 788,
+    "height": 2363,
+    "totalPhoto": 4,
+    "thumb": "/images/frames/thumb_2011.webp",
+    "template": "/images/frames/template_2011.webp",
+    "coordinates": [
+      {
+        "id": 1,
+        "x": 74,
+        "y": 220,
+        "width": 640,
+        "height": 430,
+        "rotate": 0
+      },
+      {
+        "id": 2,
+        "x": 74,
+        "y": 710,
+        "width": 640,
+        "height": 430,
+        "rotate": 0
+      },
+      {
+        "id": 3,
+        "x": 74,
+        "y": 1200,
+        "width": 640,
+        "height": 430,
+        "rotate": 0
+      },
+      {
+        "id": 4,
+        "x": 74,
+        "y": 1690,
+        "width": 640,
+        "height": 430,
+        "rotate": 0
+      }
+    ],
+    "defaultFilter": "bnw",
+    "used": 500
+  },
+  {
+    "id": 2012,
+    "name": "Windows 98 Desktop Window",
+    "category": "Y2K",
+    "width": 788,
+    "height": 2363,
+    "totalPhoto": 3,
+    "thumb": "/images/frames/thumb_2012.webp",
+    "template": "/images/frames/template_2012.webp",
+    "coordinates": [
+      {
+        "id": 1,
+        "x": 44,
+        "y": 220,
+        "width": 700,
+        "height": 520,
+        "rotate": 0
+      },
+      {
+        "id": 2,
+        "x": 44,
+        "y": 780,
+        "width": 700,
+        "height": 520,
+        "rotate": 0
+      },
+      {
+        "id": 3,
+        "x": 44,
+        "y": 1340,
+        "width": 700,
+        "height": 520,
+        "rotate": 0
+      }
+    ],
+    "defaultFilter": "normal",
+    "used": 500
+  },
+  {
+    "id": 2013,
+    "name": "Cyber Hologram Y2K",
+    "category": "Y2K",
+    "width": 788,
+    "height": 2363,
+    "totalPhoto": 4,
+    "thumb": "/images/frames/thumb_2013.webp",
+    "template": "/images/frames/template_2013.webp",
+    "coordinates": [
+      {
+        "id": 1,
+        "x": 44,
+        "y": 220,
+        "width": 700,
+        "height": 440,
+        "rotate": 0
+      },
+      {
+        "id": 2,
+        "x": 44,
+        "y": 720,
+        "width": 700,
+        "height": 440,
+        "rotate": 0
+      },
+      {
+        "id": 3,
+        "x": 44,
+        "y": 1220,
+        "width": 700,
+        "height": 440,
+        "rotate": 0
+      },
+      {
+        "id": 4,
+        "x": 44,
+        "y": 1720,
+        "width": 700,
+        "height": 440,
+        "rotate": 0
+      }
+    ],
+    "defaultFilter": "normal",
+    "used": 500
+  },
+  {
+    "id": 2014,
+    "name": "Pastel Washi Tape Scrapbook",
+    "category": "Scrapbook",
+    "width": 788,
+    "height": 2363,
+    "totalPhoto": 4,
+    "thumb": "/images/frames/thumb_2014.webp",
+    "template": "/images/frames/template_2014.webp",
+    "coordinates": [
+      {
+        "id": 1,
+        "x": 54,
+        "y": 190,
+        "width": 680,
+        "height": 430,
+        "rotate": 0
+      },
+      {
+        "id": 2,
+        "x": 54,
+        "y": 700,
+        "width": 680,
+        "height": 430,
+        "rotate": 0
+      },
+      {
+        "id": 3,
+        "x": 54,
+        "y": 1210,
+        "width": 680,
+        "height": 430,
+        "rotate": 0
+      },
+      {
+        "id": 4,
+        "x": 54,
+        "y": 1720,
+        "width": 680,
+        "height": 430,
+        "rotate": 0
+      }
+    ],
+    "defaultFilter": "soft",
+    "used": 500
+  },
+  {
+    "id": 2015,
+    "name": "Strawberry Milk Cafe",
+    "category": "Cute",
+    "width": 788,
+    "height": 2363,
+    "totalPhoto": 3,
+    "thumb": "/images/frames/thumb_2015.webp",
+    "template": "/images/frames/template_2015.webp",
+    "coordinates": [
+      {
+        "id": 1,
+        "x": 50,
+        "y": 240,
+        "width": 688,
+        "height": 520,
+        "rotate": 0
+      },
+      {
+        "id": 2,
+        "x": 50,
+        "y": 820,
+        "width": 688,
+        "height": 520,
+        "rotate": 0
+      },
+      {
+        "id": 3,
+        "x": 50,
+        "y": 1400,
+        "width": 688,
+        "height": 520,
+        "rotate": 0
+      }
+    ],
+    "defaultFilter": "soft",
+    "used": 500
+  },
+  {
+    "id": 2016,
+    "name": "Swiss Minimalist Bauhaus",
+    "category": "Modern",
+    "width": 788,
+    "height": 2363,
+    "totalPhoto": 4,
+    "thumb": "/images/frames/thumb_2016.webp",
+    "template": "/images/frames/template_2016.webp",
+    "coordinates": [
+      {
+        "id": 1,
+        "x": 44,
+        "y": 220,
+        "width": 700,
+        "height": 440,
+        "rotate": 0
+      },
+      {
+        "id": 2,
+        "x": 44,
+        "y": 720,
+        "width": 700,
+        "height": 440,
+        "rotate": 0
+      },
+      {
+        "id": 3,
+        "x": 44,
+        "y": 1220,
+        "width": 700,
+        "height": 440,
+        "rotate": 0
+      },
+      {
+        "id": 4,
+        "x": 44,
+        "y": 1720,
+        "width": 700,
+        "height": 440,
+        "rotate": 0
+      }
+    ],
+    "defaultFilter": "bnw",
+    "used": 500
+  },
   {
     "id": 150,
     "name": "Camera Foto Series (Special Edition)",
@@ -2061,7 +2954,7 @@ export const REAL_TEMPLATES: FrameTemplate[] = [
   },
   {
     "id": 1640,
-    "name": "Momen Meow (Luxury Edition)",
+    "name": "Rsyqiera",
     "category": "Cute",
     "width": 338,
     "height": 1024,

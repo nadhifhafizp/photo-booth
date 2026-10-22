@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Sparkles } from 'lucide-react';
-import { REAL_TEMPLATES, FrameTemplate, FilterType, FILTERS } from './framesData';
+import { REAL_TEMPLATES, DEFAULT_FALLBACK_TEMPLATE, FrameTemplate, FilterType, FILTERS } from './framesData';
 import { renderRealStrip, logger } from '@/lib/canvasRenderer';
 import { HeaderStepper } from '@/components/photobooth/HeaderStepper';
 import { TemplateCatalogView } from '@/components/photobooth/TemplateCatalogView';
@@ -12,6 +12,9 @@ import { ResultCelebrationView } from '@/components/photobooth/ResultCelebration
 export default function PhotoboothPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Fallback initial template when REAL_TEMPLATES is empty
+  const initialTpl = REAL_TEMPLATES[0] ?? DEFAULT_FALLBACK_TEMPLATE;
 
   // Stepper state: 'setup' (Catalog) -> 'capturing' (Camera Studio) -> 'result' (Celebration)
   const [step, setStep] = useState<'setup' | 'capturing' | 'result'>('setup');
@@ -23,8 +26,8 @@ export default function PhotoboothPage() {
   const [isGenerating, setIsGenerating] = useState(false);
 
   // Template & filter preferences
-  const [selectedTplId, setSelectedTplId]       = useState<number | string>(REAL_TEMPLATES[0].id);
-  const [selectedFilter, setSelectedFilter]     = useState<FilterType>(REAL_TEMPLATES[0].defaultFilter ?? 'bnw');
+  const [selectedTplId, setSelectedTplId]       = useState<number | string>(initialTpl.id);
+  const [selectedFilter, setSelectedFilter]     = useState<FilterType>(initialTpl.defaultFilter ?? 'bnw');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery]           = useState<string>('');
 
@@ -38,14 +41,32 @@ export default function PhotoboothPage() {
   const [cameraError, setCameraError]     = useState<string | null>(null);
   const [retryCount, setRetryCount]       = useState(0);
   const [isCapturing, setIsCapturing]     = useState(false);
+  const [pendingReviewPhoto, setPendingReviewPhoto] = useState<{ index: number; dataUrl: string } | null>(null);
 
   // Refs for async timer callbacks
-  const tplRef      = useRef(REAL_TEMPLATES[0]);
+  const tplRef      = useRef(initialTpl);
   const filterRef   = useRef(selectedFilter);
   const photosRef   = useRef<string[]>([]);
   const timerDurRef = useRef(timerDuration);
 
-  const selectedTpl = REAL_TEMPLATES.find(t => t.id === selectedTplId) ?? REAL_TEMPLATES[0];
+  // Read URL query parameter for pre-selected template
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tplParam = params.get('template');
+      if (tplParam) {
+        const found = REAL_TEMPLATES.find(t => String(t.id) === tplParam);
+        if (found) {
+          setSelectedTplId(found.id);
+          if (found.defaultFilter) {
+            setSelectedFilter(found.defaultFilter);
+          }
+        }
+      }
+    }
+  }, []);
+
+  const selectedTpl = REAL_TEMPLATES.find(t => t.id === selectedTplId) ?? initialTpl;
 
   useEffect(() => { tplRef.current = selectedTpl; }, [selectedTpl]);
   useEffect(() => { filterRef.current = selectedFilter; }, [selectedFilter]);
@@ -189,6 +210,7 @@ export default function PhotoboothPage() {
     setPhotos([]);
     photosRef.current = [];
     setCurrentShot(0);
+    setPendingReviewPhoto(null);
     setStep('capturing');
   };
 
@@ -217,14 +239,12 @@ export default function PhotoboothPage() {
     setCameraError(null);
   };
 
-  // Capture sequence
+  // Start countdown for the current shot pose
   const startCaptureSequence = () => {
-    if (isCapturing) return;
-    logger.info(`Mulai sesi foto beruntun (${selectedTpl.totalPhoto} pose).`);
-    setPhotos([]);
-    photosRef.current = [];
+    if (isCapturing || pendingReviewPhoto) return;
+    logger.info(`Mulai pengambilan foto pose ke-${currentShot + 1}`);
     setIsCapturing(true);
-    startCountdownForShot(0);
+    startCountdownForShot(currentShot);
   };
 
   const startCountdownForShot = useCallback((shotIndex: number) => {
@@ -266,43 +286,72 @@ export default function PhotoboothPage() {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       ctx.resetTransform();
 
-      const newPhotos = [...photosRef.current, canvas.toDataURL('image/png')];
-      photosRef.current = newPhotos;
-      setPhotos(newPhotos);
-      logger.info(`Foto pose ${shotIndex + 1} tersimpan.`);
-
-      const neededCount = tplRef.current.totalPhoto;
-
-      if (shotIndex + 1 < neededCount) {
-        // Pause 1.4s between poses so users have time to change position
-        setTimeout(() => startCountdownForShot(shotIndex + 1), 1400);
-      } else {
-        // All photos captured -> Render photostrip with authentic Snaporia watermark
-        setIsGenerating(true);
-        setIsCapturing(false);
-        stream?.getTracks().forEach(t => t.stop());
-        setStream(null);
-
-        const currentTpl = tplRef.current;
-        const currentFilter = filterRef.current;
-
-        setTimeout(async () => {
-          try {
-            await renderRealStrip(canvasRef.current!, photosRef.current, currentTpl, currentFilter);
-            setFinalImage(canvasRef.current!.toDataURL('image/png', 1.0));
-            setStep('result');
-          } catch (err) {
-            logger.error('Gagal generate strip photobooth:', err);
-            alert('Gagal membuat strip foto. Coba ulangi kembali.');
-            setStep('capturing');
-          } finally {
-            setIsGenerating(false);
-          }
-        }, 600);
-      }
+      const capturedUrl = canvas.toDataURL('image/png');
+      setPendingReviewPhoto({ index: shotIndex, dataUrl: capturedUrl });
+      setIsCapturing(false);
+      logger.info(`Pose ${shotIndex + 1} berhasil diambil, menunggu konfirmasi review.`);
     },
-    [stream, isMirrored, startCountdownForShot]
+    [isMirrored]
   );
+
+  const handleKeepPhoto = () => {
+    if (!pendingReviewPhoto) return;
+    const shotIndex = pendingReviewPhoto.index;
+    const updatedPhotos = [...photos];
+    updatedPhotos[shotIndex] = pendingReviewPhoto.dataUrl;
+    setPhotos(updatedPhotos);
+    photosRef.current = updatedPhotos;
+    setPendingReviewPhoto(null);
+
+    const neededCount = tplRef.current.totalPhoto;
+    const filledCount = updatedPhotos.filter(Boolean).length;
+
+    if (filledCount >= neededCount) {
+      // All photos ready -> Generate photostrip
+      setIsGenerating(true);
+      stream?.getTracks().forEach(t => t.stop());
+      setStream(null);
+
+      const currentTpl = tplRef.current;
+      const currentFilter = filterRef.current;
+
+      setTimeout(async () => {
+        try {
+          await renderRealStrip(canvasRef.current!, updatedPhotos, currentTpl, currentFilter);
+          setFinalImage(canvasRef.current!.toDataURL('image/png', 1.0));
+          setStep('result');
+        } catch (err) {
+          logger.error('Gagal generate strip photobooth:', err);
+          alert('Gagal membuat strip foto. Coba ulangi kembali.');
+          setStep('capturing');
+        } finally {
+          setIsGenerating(false);
+        }
+      }, 600);
+    } else {
+      // Advance to the next unfilled slot
+      let nextSlot = shotIndex + 1;
+      if (nextSlot >= neededCount || updatedPhotos[nextSlot]) {
+        const emptyIdx = updatedPhotos.findIndex((p, i) => i < neededCount && !p);
+        nextSlot = emptyIdx !== -1 ? emptyIdx : shotIndex + 1;
+      }
+      setCurrentShot(nextSlot);
+      logger.info(`Lanjut ke pose ke-${nextSlot + 1}. Kamera dapat diganti kapan saja.`);
+    }
+  };
+
+  const handleRetakeCurrent = () => {
+    logger.info(`Retake pose ke-${currentShot + 1}.`);
+    setPendingReviewPhoto(null);
+    setIsCapturing(false);
+  };
+
+  const handleRetakeSpecificPose = (index: number) => {
+    if (isCapturing) return;
+    logger.info(`Pilih retake pose spesifik ke-${index + 1}.`);
+    setCurrentShot(index);
+    setPendingReviewPhoto(null);
+  };
 
   // Instant switch in result view
   const switchTemplateInResult = async (tpl: FrameTemplate) => {
@@ -356,13 +405,15 @@ export default function PhotoboothPage() {
     setFinalImage(null);
     setPhotos([]);
     photosRef.current = [];
+    setPendingReviewPhoto(null);
+    setCurrentShot(0);
     setIsCapturing(false);
     setStep('setup');
     setRetryCount(c => c + 1);
   };
 
   // Filter & Search categories
-  const categories = ['All', 'Y2K', 'Cute', 'Aesthetic', 'Newspaper', 'Vintage', 'Music', 'Modern', 'Scrapbook'];
+  const categories = ['All', 'Vintage', 'Newspaper', 'Music', 'Y2K', 'Cute', 'Aesthetic', 'Modern', 'Scrapbook', 'Grid', 'Photostrip'];
   const filteredTemplates = REAL_TEMPLATES.filter(t => {
     const matchesCat = selectedCategory === 'All' || t.category.toLowerCase() === selectedCategory.toLowerCase();
     const matchesSearch =
@@ -373,10 +424,7 @@ export default function PhotoboothPage() {
   });
 
   return (
-    <main
-      className="min-h-screen relative flex flex-col justify-between"
-      style={{ background: 'var(--background)' }}
-    >
+    <main className="min-h-screen relative flex flex-col justify-between bg-paper text-ink">
       {/* ── TOP STEPPER HEADER ── */}
       <HeaderStepper
         step={step}
@@ -389,13 +437,15 @@ export default function PhotoboothPage() {
       {/* ── FULL SCREEN LOADING OVERLAY (DURING GENERATION) ── */}
       {isGenerating && (
         <div
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4"
-          style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)' }}
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-ink/80 backdrop-blur-xs select-none"
         >
-          <div className="w-10 h-10 border-2 border-pink-500 border-t-transparent rounded-full animate-spin" />
-          <p className="font-semibold text-base text-white">
-            Memasang foto ke frame &amp; mencetak watermark Snaporia...
+          <div className="w-14 h-14 border-4 border-lime border-t-transparent rounded-full animate-spin shadow-stk-sm" />
+          <p className="font-display text-xl text-white uppercase tracking-tight text-center px-4">
+            Developing your photostrip...
           </p>
+          <span className="font-mono text-xs text-lime font-bold">
+            ✦ HIGH RESOLUTION COMPOSITING
+          </span>
         </div>
       )}
 
@@ -442,6 +492,10 @@ export default function PhotoboothPage() {
             onToggleCameraFacing={toggleCameraFacing}
             onTriggerShutter={startCaptureSequence}
             isCapturing={isCapturing}
+            pendingReviewPhoto={pendingReviewPhoto}
+            onKeepPhoto={handleKeepPhoto}
+            onRetakeCurrent={handleRetakeCurrent}
+            onRetakeSpecificPose={handleRetakeSpecificPose}
           />
         )}
 
@@ -463,9 +517,9 @@ export default function PhotoboothPage() {
       {/* Hidden high-res canvas used by 2D canvas compositor */}
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* Footer copyright */}
-      <footer className="w-full py-4 text-center border-t text-xs font-medium text-neutral-400" style={{ borderColor: 'var(--border)' }}>
-        © {new Date().getFullYear()} Snaporia — Authentic Online Photobooth
+      {/* Footer copyright (Neo-brutalist) */}
+      <footer className="w-full py-4 text-center border-t-[2.5px] border-ink bg-white text-xs font-mono font-bold text-ink/70">
+        © {new Date().getFullYear()} SNAPORIA. SHOT WITH INTENT.
       </footer>
     </main>
   );

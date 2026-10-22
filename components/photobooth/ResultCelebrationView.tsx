@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Download, Share2, Copy, Check, Sparkles, ArrowRight, RefreshCw, Palette } from 'lucide-react';
+import { Download, Share2, Copy, Check, Printer, RotateCcw, Palette, ArrowRight } from 'lucide-react';
 import { FrameTemplate, FilterType, FILTERS } from '@/app/photobooth/framesData';
+import { playClickSound } from '@/lib/sfx';
 
 interface ResultCelebrationViewProps {
   finalImage: string;
@@ -25,7 +26,6 @@ export const ResultCelebrationView: React.FC<ResultCelebrationViewProps> = ({
   onReset,
   selectedFilter,
   onChangeFilter,
-  onBackToCatalog,
 }) => {
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
@@ -33,6 +33,7 @@ export const ResultCelebrationView: React.FC<ResultCelebrationViewProps> = ({
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
 
   const handleCopyLink = async () => {
+    playClickSound();
     try {
       await navigator.clipboard.writeText(window.location.href);
       setCopied(true);
@@ -44,11 +45,12 @@ export const ResultCelebrationView: React.FC<ResultCelebrationViewProps> = ({
   };
 
   const handleShare = async () => {
+    playClickSound();
     if (navigator.share) {
       try {
         await navigator.share({
           title: 'Snaporia Photobooth Strip',
-          text: 'Lihat hasil foto photobooth kami di Snaporia!',
+          text: 'Lihat photostrip kami yang baru saja dicetak di Snaporia!',
           url: window.location.href,
         });
         setShared(true);
@@ -61,100 +63,137 @@ export const ResultCelebrationView: React.FC<ResultCelebrationViewProps> = ({
     }
   };
 
+  const handlePrint = () => {
+    playClickSound();
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Cetak Photostrip Snaporia</title>
+            <style>
+              @page { size: auto; margin: 10mm; }
+              body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #fff; }
+              img { max-height: 95vh; max-width: 100%; object-fit: contain; }
+            </style>
+          </head>
+          <body>
+            <img src="${finalImage}" onload="window.print(); window.close();" />
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
+  };
+
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 md:px-8 py-8 flex flex-col lg:flex-row gap-8 lg:gap-14 items-center justify-center animate-in fade-in duration-300">
-      {/* ── LEFT: TILTED PHOTOSTRIP DISPLAY ── */}
-      <div className="w-full lg:w-[46%] flex items-center justify-center">
-        <div
-          className="relative p-6 md:p-8 rounded-3xl border shadow-xl flex items-center justify-center max-w-sm w-full"
-          style={{ background: '#121214', borderColor: 'var(--border)' }}
-        >
-          {/* Tilted Photo Strip */}
-          <div className="relative group max-h-[76vh] flex items-center justify-center transform -rotate-2 hover:rotate-0 transition-transform duration-300">
-            <img
-              src={finalImage}
-              alt="Hasil Photostrip Snaporia"
-              className="max-h-[70vh] w-auto object-contain rounded-xl shadow-2xl border border-white/10"
-            />
-          </div>
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-28 flex flex-col lg:flex-row gap-10 lg:gap-14 items-center justify-center animate-in fade-in duration-200">
+
+      {/* ── LEFT: TILTED PHOTOSTRIP DISPLAY (STICKER SHADOW) ── */}
+      <div className="w-full lg:w-[46%] flex items-center justify-center relative">
+        {/* Floating Sticker: READY */}
+        <div className="absolute -top-4 -left-2 z-20 bg-lime text-ink font-mono font-black text-xs px-3.5 py-1.5 rounded-full border-2 border-ink shadow-stk-sm rotate-[-6deg]">
+          READY ✓
+        </div>
+
+        {/* Floating Sticker: 100% HD */}
+        <div className="absolute -bottom-3 -right-2 z-20 bg-yellow text-ink font-mono font-black text-xs px-3.5 py-1.5 rounded-full border-2 border-ink shadow-stk-sm rotate-[4deg]">
+          ★ 300 DPI HD
+        </div>
+
+        {/* Photostrip Container */}
+        <div className="bg-white border-[3px] border-ink p-4 sm:p-6 rounded-3xl shadow-[12px_12px_0_#0e0b1f] max-w-sm w-full flex items-center justify-center -rotate-2 hover:rotate-0 transition-transform duration-300">
+          <img
+            src={finalImage}
+            alt="Hasil Photostrip Snaporia"
+            className="max-h-[70vh] w-auto object-contain rounded-xl border-2 border-ink shadow-sm"
+          />
         </div>
       </div>
 
       {/* ── RIGHT: CELEBRATION ACTIONS & DETAILS ── */}
       <div className="w-full lg:w-[54%] flex flex-col gap-6">
-        {/* Main Headings */}
-        <div className="space-y-2">
-          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight" style={{ color: 'var(--foreground)' }}>
-            Hasil fotomu udah jadi.
+        {/* Main Headline */}
+        <div>
+          <p className="font-editorial-mono text-brand font-bold mb-2">03 / FINAL STRIP</p>
+          <h1 className="text-4xl sm:text-6xl text-ink font-display leading-[0.95]">
+            STRIP IS <em className="accent">ready.</em>
           </h1>
-          <p className="text-sm md:text-base text-muted-foreground font-normal max-w-lg">
-            Simpan photostrip ini atau kirim langsung ke teman-temanmu. Strip dilengkapi watermark resmi <strong className="text-foreground">snaporia.</strong>
+          <p className="text-muted text-sm sm:text-base mt-2 max-w-lg leading-relaxed">
+            Simpan photostrip ini dalam resolusi tinggi atau cetak langsung.
           </p>
         </div>
 
-        {/* Action Buttons Grid */}
-        <div className="grid grid-cols-2 gap-3 max-w-md">
-          {/* 1. Download Button (Big Primary) */}
+        {/* Action Buttons Grid (Neo-brutalist) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md">
+          {/* 1. Download Button (Primary Lime) */}
           <button
-            onClick={onDownload}
-            className="col-span-1 py-3 px-5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 cursor-pointer transition-all hover:bg-pink-600 active:scale-95 shadow-sm"
-            style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}
+            type="button"
+            onClick={() => {
+              playClickSound();
+              onDownload();
+            }}
+            className="btn-brutal py-3.5 px-6 text-sm"
           >
-            <Download size={18} /> Download
+            <Download size={18} />
+            <span>Download ↓</span>
           </button>
 
-          {/* 2. Share Button */}
+          {/* 2. Print Button */}
           <button
+            type="button"
+            onClick={handlePrint}
+            className="btn-brutal btn-brutal-white py-3.5 px-6 text-sm"
+          >
+            <Printer size={18} />
+            <span>Cetak ⎙</span>
+          </button>
+
+          {/* 3. Tone Selector Trigger */}
+          <button
+            type="button"
+            onClick={() => {
+              playClickSound();
+              setShowFilterPicker(!showFilterPicker);
+            }}
+            className="btn-brutal btn-brutal-white py-3 px-5 text-xs"
+          >
+            <Palette size={16} />
+            <span>Ganti Tone ✦</span>
+          </button>
+
+          {/* 4. Copy / Share */}
+          <button
+            type="button"
             onClick={handleShare}
-            className="col-span-1 py-3 px-5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 border cursor-pointer transition-all hover:bg-neutral-900"
-            style={{ background: 'var(--card)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
+            className="btn-brutal btn-brutal-white py-3 px-5 text-xs"
           >
-            {shared ? <Check size={18} className="text-emerald-500" /> : <Share2 size={18} />}
-            <span>{shared ? 'Tershare!' : 'Bagikan'}</span>
-          </button>
-
-          {/* 3. Tone / Filter Button */}
-          <button
-            onClick={() => setShowFilterPicker(!showFilterPicker)}
-            className="col-span-1 py-2.5 px-5 rounded-xl font-semibold text-xs flex items-center justify-center gap-2 border cursor-pointer transition-all hover:bg-neutral-900"
-            style={{ background: 'var(--card)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
-          >
-            <Palette size={16} /> Ganti Tone
-          </button>
-
-          {/* 4. Copy Link Button */}
-          <button
-            onClick={handleCopyLink}
-            className="col-span-1 py-3 px-5 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 border cursor-pointer transition-all hover:opacity-80"
-            style={{ background: 'var(--card)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
-          >
-            {copied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
-            <span>{copied ? 'Tersalin!' : 'Salin link'}</span>
+            {shared || copied ? <Check size={16} className="text-brand font-bold" /> : <Share2 size={16} />}
+            <span>{shared || copied ? 'Tersalin!' : 'Bagikan ↗'}</span>
           </button>
         </div>
 
         {/* Tone Picker Expansion (if opened) */}
         {showFilterPicker && (
-          <div
-            className="p-4 rounded-2xl border flex flex-col gap-2 max-w-md animate-in fade-in duration-200"
-            style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
-          >
-            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-              Ubah Tone Foto (Instan):
+          <div className="p-4 bg-white rounded-2xl border-[2.5px] border-ink shadow-stk-sm flex flex-col gap-2.5 max-w-md animate-in fade-in duration-150">
+            <span className="font-editorial-mono text-[11px] text-ink font-bold uppercase">
+              UBAH TONE PHOTOSTRIP (INSTAN):
             </span>
             <div className="grid grid-cols-4 gap-2">
               {FILTERS.map(f => (
                 <button
                   key={f.id}
-                  onClick={() => onChangeFilter(f.id)}
-                  className={`py-1.5 px-2 rounded-xl text-xs font-bold border transition cursor-pointer text-center ${
-                    selectedFilter === f.id ? 'ring-2 ring-pink-500' : 'hover:opacity-80'
-                  }`}
-                  style={{
-                    background: selectedFilter === f.id ? 'var(--primary)' : 'var(--muted)',
-                    borderColor: 'var(--border)',
-                    color: selectedFilter === f.id ? 'var(--primary-foreground)' : 'var(--foreground)',
+                  type="button"
+                  onClick={() => {
+                    playClickSound();
+                    onChangeFilter(f.id);
                   }}
+                  className={`py-2 px-2 rounded-xl font-mono text-xs font-bold border-2 border-ink transition-all cursor-pointer text-center select-none ${
+                    selectedFilter === f.id
+                      ? 'bg-brand text-white shadow-stk-sm'
+                      : 'bg-paper text-ink hover:bg-brand-tint'
+                  }`}
                 >
                   {f.label}
                 </button>
@@ -163,59 +202,77 @@ export const ResultCelebrationView: React.FC<ResultCelebrationViewProps> = ({
           </div>
         )}
 
-        {/* QR Code Card for Mobile Download */}
-        <div
-          className="max-w-md p-4 rounded-3xl border flex items-center gap-4 shadow-sm"
-          style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
-        >
-          {/* Crisp QR Code Graphic */}
-          <div className="w-16 h-16 rounded-xl bg-white p-1.5 shrink-0 flex items-center justify-center shadow-inner">
-            <svg viewBox="0 0 24 24" className="w-full h-full text-black fill-current">
+        {/* QR Code Sticker Card for Mobile Transfer */}
+        <div className="max-w-md p-5 bg-white rounded-3xl border-[2.5px] border-ink shadow-stk flex items-center gap-4">
+          <div className="w-16 h-16 rounded-2xl border-2 border-ink bg-yellow p-2 shrink-0 flex items-center justify-center shadow-stk-sm">
+            <svg viewBox="0 0 24 24" className="w-full h-full text-ink fill-current">
               <path d="M2 2h8v8H2V2zm2 2v4h4V4H4zm10-2h8v8h-8V2zm2 2v4h4V4h-4zM2 14h8v8H2v-8zm2 2v4h4v-4H4zm14 0h4v2h-4v-2zm-4 0h2v2h-2v-2zm2 2h2v2h-2v-2zm2 2h2v2h-2v-2zm-4 0h2v2h-2v-2zm0-4h2v2h-2v-2zm4-2h2v2h-2v-2z" />
             </svg>
           </div>
-          <div className="flex flex-col">
-            <h4 className="font-bold text-sm" style={{ color: 'var(--foreground)' }}>
-              Scan untuk ambil di HP
+          <div>
+            <h4 className="font-display text-base text-ink uppercase leading-tight">
+              Scan untuk simpan di HP
             </h4>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Link aktif selama 24 jam untuk unduhan langsung tanpa kabel.
+            <p className="text-xs text-muted mt-1 leading-relaxed">
+              Buka kamera ponsel Anda untuk mengunduh photostrip ini langsung tanpa kabel.
             </p>
           </div>
         </div>
 
-        {/* Quick Switch Template / Back link */}
-        <div className="pt-2 border-t max-w-md flex flex-col gap-3" style={{ borderColor: 'var(--border)' }}>
+        {/* Quick Reset / Switch Template Options */}
+        <div className="pt-2 border-t-2 border-ink max-w-md flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-muted-foreground">Mau vibes lain?</span>
+            <span className="font-mono text-xs font-bold text-muted">Mau coba gaya lain?</span>
             <button
-              onClick={() => setShowTemplatePicker(!showTemplatePicker)}
-              className="text-xs font-bold text-pink-500 hover:text-pink-400 flex items-center gap-1 cursor-pointer"
+              type="button"
+              onClick={() => {
+                playClickSound();
+                setShowTemplatePicker(!showTemplatePicker);
+              }}
+              className="font-mono text-xs font-bold text-brand hover:underline flex items-center gap-1 cursor-pointer"
             >
-              Pilih template baru <ArrowRight size={14} />
+              <span>Pilih frame baru</span>
+              <ArrowRight size={14} />
             </button>
           </div>
 
           {showTemplatePicker && (
-            <div className="grid grid-cols-4 gap-2 pt-2 animate-in fade-in duration-200">
+            <div className="grid grid-cols-4 gap-2 pt-2 animate-in fade-in duration-150">
               {templates.slice(0, 8).map(tpl => (
                 <button
                   key={tpl.id}
-                  onClick={() => onSwitchTemplate(tpl)}
-                  className={`p-1.5 rounded-xl border text-center transition cursor-pointer hover:scale-105 ${
-                    selectedTpl.id === tpl.id ? 'ring-2 ring-pink-500' : ''
+                  type="button"
+                  onClick={() => {
+                    playClickSound();
+                    onSwitchTemplate(tpl);
+                  }}
+                  className={`p-1.5 rounded-xl border-2 border-ink text-center transition cursor-pointer hover:scale-105 bg-white ${
+                    selectedTpl.id === tpl.id ? 'ring-2 ring-brand' : ''
                   }`}
-                  style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
                 >
                   <img src={tpl.thumb} alt={tpl.name} className="w-full aspect-[9/16] object-contain rounded mb-1" />
-                  <span className="text-[10px] font-bold block truncate" style={{ color: 'var(--foreground)' }}>
+                  <span className="font-mono text-[9px] font-bold block truncate text-ink">
                     {tpl.name.replace(/^[^\w\s]+/, '').trim()}
                   </span>
                 </button>
               ))}
             </div>
           )}
+
+          <button
+            type="button"
+            onClick={() => {
+              playClickSound();
+              onReset();
+            }}
+            className="btn-brutal btn-brutal-brand text-xs py-3 px-5 justify-center mt-2"
+          >
+            <RotateCcw size={14} />
+            <span>Mulai Sesi Baru</span>
+            <span>↺</span>
+          </button>
         </div>
+
       </div>
     </div>
   );

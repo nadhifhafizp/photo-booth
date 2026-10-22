@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Search, Sparkles, Check, Camera, X } from 'lucide-react';
+import { Search, Camera, X, Check } from 'lucide-react';
 import { FrameTemplate } from '@/app/photobooth/framesData';
+import { playClickSound } from '@/lib/sfx';
 
 interface TemplateCatalogViewProps {
   selectedTpl: FrameTemplate;
@@ -29,195 +30,224 @@ export const TemplateCatalogView: React.FC<TemplateCatalogViewProps> = ({
   onConfirmTemplate,
 }) => {
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 md:px-8 py-6 pb-28 flex flex-col gap-8 animate-in fade-in duration-300">
-      {/* ── HERO HEADER (STEP 01) ── */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b pb-6" style={{ borderColor: 'var(--border)' }}>
-        <div className="space-y-2">
-          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight" style={{ color: 'var(--foreground)' }}>
-            Pilih template yang paling kamu banget.
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-36 flex flex-col gap-8 animate-in fade-in duration-200">
+      {/* ── SECTION HEADER (`01 / PICK A LAYOUT`) ── */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b-[2.5px] border-ink pb-8">
+        <div>
+          <p className="font-editorial-mono text-brand font-bold mb-2">01 / PICK A LAYOUT</p>
+          <h1 className="text-4xl sm:text-6xl text-ink font-display">
+            CHOOSE YOUR <em className="accent">aesthetic</em>.
           </h1>
-          <p className="text-sm md:text-base max-w-2xl font-normal" style={{ color: 'var(--muted-foreground)' }}>
-            Jelajahi 60+ koleksi frame Gen Z viral (Newspaper, Y2K, Cute, Music, Scrapbook, Modern). Siap pose {selectedTpl.totalPhoto} kali dengan watermark resmi Snaporia.
+          <p className="text-muted text-sm sm:text-base mt-2 max-w-xl">
+            Pilih dari 80+ koleksi frame estetik viral (Retro Polaroid, Newspaper, Music, Vintage Film, Y2K, Cute, Modern).
           </p>
-          <div className="flex items-center gap-3 pt-1">
-            <button
-              onClick={onConfirmTemplate}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-pink-500/40 text-pink-400 hover:bg-pink-500/10 cursor-pointer transition shadow-sm"
-            >
-              <Camera size={14} /> Langsung Buka Kamera Studio →
-            </button>
-          </div>
         </div>
 
-        {/* Search Bar */}
+        {/* Brutalist Search Bar */}
         <div className="w-full md:w-80">
-          <div
-            className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border text-sm transition-all focus-within:ring-1 focus-within:ring-pink-500"
-            style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
-          >
-            <Search size={16} style={{ color: 'var(--muted-foreground)' }} />
+          <label htmlFor="template-search" className="font-editorial-mono block text-xs font-bold text-ink mb-1.5">
+            CARI FRAME:
+          </label>
+          <div className="relative flex items-center">
             <input
+              id="template-search"
               type="text"
-              placeholder="Cari template..."
+              placeholder="Ketik nama atau tema..."
               value={searchQuery}
               onChange={e => onSearchQueryChange(e.target.value)}
-              className="bg-transparent w-full outline-none text-sm font-medium"
-              style={{ color: 'var(--foreground)' }}
+              className="w-full bg-white border-[2.5px] border-ink rounded-2xl px-4 py-2.5 pr-10 text-sm font-medium text-ink placeholder:text-muted focus:shadow-stk-sm focus:outline-none"
             />
-            {searchQuery && (
+            {searchQuery ? (
               <button
-                onClick={() => onSearchQueryChange('')}
-                className="text-xs font-bold text-muted-foreground hover:text-foreground cursor-pointer px-1 flex items-center justify-center"
-                aria-label="Hapus pencarian"
+                type="button"
+                onClick={() => {
+                  playClickSound();
+                  onSearchQueryChange('');
+                }}
+                className="absolute right-3 p-1 text-ink/60 hover:text-ink cursor-pointer"
+                aria-label="Hapus teks pencarian"
               >
-                <X size={14} />
+                <X size={16} />
               </button>
+            ) : (
+              <Search size={16} className="absolute right-3 text-muted pointer-events-none" />
             )}
           </div>
         </div>
       </div>
 
-      {/* ── CATEGORY PILLS ── */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+      {/* ── CATEGORY PILLS (CHIPS) ── */}
+      <div className="flex items-center gap-2.5 overflow-x-auto pb-2 no-scrollbar">
         {categories.map(cat => {
           const isActive = selectedCategory.toLowerCase() === cat.toLowerCase();
           return (
             <button
               key={cat}
-              onClick={() => onSelectCategory(cat)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0 ${
-                isActive
-                  ? 'shadow-sm text-white'
-                  : 'text-neutral-400 hover:text-white border border-neutral-800 bg-neutral-900/80'
-              }`}
-              style={{
-                background: isActive ? 'var(--primary)' : undefined,
-                borderColor: isActive ? 'var(--primary)' : undefined,
+              type="button"
+              onClick={() => {
+                playClickSound();
+                onSelectCategory(cat);
               }}
+              className={`px-4 py-2 rounded-full font-mono text-xs font-bold uppercase tracking-wider border-2 border-ink transition-all cursor-pointer shrink-0 select-none ${
+                isActive
+                  ? 'bg-brand text-white shadow-stk-sm'
+                  : 'bg-white text-ink hover:bg-brand-tint'
+              }`}
             >
-              {cat === 'All' ? 'Semua Frame' : cat}
+              {cat === 'All' ? '✦ SEMUA FRAME' : cat}
             </button>
           );
         })}
       </div>
 
-      {/* ── TEMPLATES GRID ── */}
+      {/* ── TEMPLATES GRID (STICKER CARDS) ── */}
       {filteredTemplates.length === 0 ? (
-        <div className="py-20 text-center space-y-3">
-          <p className="text-lg font-bold" style={{ color: 'var(--foreground)' }}>
-            Tidak ada template yang cocok dengan &quot;{searchQuery}&quot;
+        <div className="py-16 text-center space-y-4 bg-white rounded-3xl border-[2.5px] border-ink p-8 shadow-stk max-w-lg mx-auto">
+          <div className="inline-flex p-3 rounded-full bg-brand-tint border-2 border-ink text-brand font-display text-2xl">
+            ✦
+          </div>
+          <p className="font-display text-2xl text-ink uppercase">
+            {searchQuery ? 'Frame Tidak Ditemukan' : 'Semua Frame Telah Dikosongkan'}
           </p>
-          <button
-            onClick={() => {
-              onSearchQueryChange('');
-              onSelectCategory('All');
-            }}
-            className="text-xs font-bold underline cursor-pointer"
-            style={{ color: 'var(--primary)' }}
-          >
-            Reset pencarian & kategori
-          </button>
+          <p className="text-muted text-xs sm:text-sm leading-relaxed max-w-md mx-auto">
+            {searchQuery
+              ? `Tidak ada template yang cocok dengan kata kunci "${searchQuery}".`
+              : 'Seluruh template frame lama telah dihapus sesuai permintaan. Anda dapat menginstruksikan frame baru yang diinginkan, atau langsung mencoba kamera studio.'}
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            {searchQuery ? (
+              <button
+                type="button"
+                onClick={() => {
+                  playClickSound();
+                  onSearchQueryChange('');
+                  onSelectCategory('All');
+                }}
+                className="btn-brutal btn-brutal-brand text-xs py-2 px-4"
+              >
+                <span>Reset Pencarian</span>
+                <span>↺</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  playClickSound();
+                  onConfirmTemplate();
+                }}
+                className="btn-brutal text-xs py-3 px-5"
+              >
+                <Camera size={16} />
+                <span>Coba Kamera Studio (Default Strip)</span>
+                <span>↗</span>
+              </button>
+            )}
+          </div>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-          {filteredTemplates.map(tpl => {
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+          {filteredTemplates.map((tpl, idx) => {
             const isSelected = selectedTpl.id === tpl.id;
+            const tilt = idx % 2 === 0 ? 'card-tilt-odd' : 'card-tilt-even';
+
             return (
-              <div
+              <article
                 key={tpl.id}
-                onClick={() => onSelectTemplate(tpl)}
-                className={`group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 flex flex-col border ${
-                  isSelected
-                    ? 'ring-2 ring-pink-500 bg-pink-500/5 shadow-md'
-                    : 'hover:border-neutral-700 bg-neutral-950'
-                }`}
-                style={{
-                  borderColor: isSelected ? 'var(--primary)' : 'var(--border)',
+                onClick={() => {
+                  playClickSound();
+                  onSelectTemplate(tpl);
                 }}
+                className={`card-sticker ${tilt} cursor-pointer relative flex flex-col justify-between ${
+                  isSelected
+                    ? 'border-[3px] border-brand shadow-[8px_8px_0_#3a21c4] bg-[#faf8ff]'
+                    : 'hover:border-ink'
+                }`}
               >
-                {/* "Dipilih" Badge */}
+                {/* Selected Check Badge */}
                 {isSelected && (
-                  <div
-                    className="absolute top-3 left-3 z-20 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm"
-                    style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}
-                  >
-                    <Check size={12} strokeWidth={3} /> Dipilih
+                  <div className="absolute -top-3 -right-3 z-20 bg-lime text-ink border-2 border-ink px-2.5 py-1 rounded-full font-mono text-[11px] font-black shadow-stk-sm flex items-center gap-1">
+                    <Check size={12} strokeWidth={3} />
+                    <span>ACTIVE</span>
                   </div>
                 )}
 
-                {/* Subtle watermark indicator on card preview */}
-                <div className="absolute top-3 right-3 z-20 px-2 py-0.5 rounded text-xs font-semibold backdrop-blur-md bg-black/60 text-white/80">
-                  snaporia.
-                </div>
+                <div>
+                  {/* Card Meta */}
+                  <div className="flex items-center justify-between mb-3 font-editorial-mono text-[11px]">
+                    <span className="text-brand font-bold">
+                      {`#${tpl.id}`}
+                    </span>
+                    <span className="text-muted">
+                      {tpl.category}
+                    </span>
+                  </div>
 
-                {/* Template Frame Preview */}
-                <div className="relative aspect-[9/16] bg-black/40 overflow-hidden flex items-center justify-center p-3">
-                  <img
-                    src={tpl.thumb}
-                    alt={tpl.name}
-                    loading="lazy"
-                    className="h-full w-auto object-contain drop-shadow-md"
-                  />
-                </div>
+                  {/* Thumbnail Container */}
+                  <div className="relative aspect-[3/4] bg-brand-tint rounded-2xl border-2 border-ink p-2 flex items-center justify-center overflow-hidden group">
+                    <img
+                      src={tpl.thumb}
+                      alt={tpl.name}
+                      className="h-full w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  </div>
 
-                {/* Card Meta Footer */}
-                <div className="p-3.5 flex flex-col gap-1 border-t" style={{ borderColor: 'var(--border)' }}>
-                  <h3 className="font-bold text-sm truncate" style={{ color: 'var(--foreground)' }}>
+                  {/* Title */}
+                  <h3 className="font-display text-lg text-ink uppercase mt-3 leading-snug line-clamp-1">
                     {tpl.name.replace(/^[^\w\s]+/, '').trim()}
                   </h3>
-                  <div className="flex items-center justify-between text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>
-                    <span>{tpl.category}</span>
-                    <span>• {tpl.totalPhoto} foto</span>
-                  </div>
                 </div>
-              </div>
+
+                {/* Footer Tag */}
+                <div className="mt-4 pt-3 border-t-2 border-ink flex items-center justify-between font-mono text-[11px]">
+                  <span className="chip-brutal text-[10px] py-0.5 px-2">
+                    {tpl.totalPhoto} POSES
+                  </span>
+                  <span className="font-bold text-brand">
+                    {isSelected ? '✓ Terpilih' : 'Pilih ⟶'}
+                  </span>
+                </div>
+              </article>
             );
           })}
         </div>
       )}
 
-      {/* ── FIXED FLOATING BOTTOM BAR ── */}
-      <div
-        className="fixed bottom-0 left-0 right-0 z-50 p-4 border-t backdrop-blur-xl"
-        style={{ background: 'rgba(10, 10, 10, 0.95)', borderColor: 'var(--border)' }}
-      >
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          {/* Selected Template Thumbnail & Name */}
-          <div className="flex items-center gap-3 min-w-0">
-            <div
-              className="w-12 h-14 rounded-lg overflow-hidden border shrink-0 bg-black flex items-center justify-center p-1"
-              style={{ borderColor: 'var(--primary)' }}
-            >
+      {/* ── FLOATING TACTILE ACTION DOCK (STICKY BOTTOM) ── */}
+      <aside aria-label="Aksi konfirmasi template" className="fixed bottom-6 left-4 right-4 z-30 max-w-2xl mx-auto">
+        <div className="bg-white border-[2.5px] border-ink rounded-3xl p-4 shadow-[8px_8px_0_#0e0b1f] flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 overflow-hidden">
+            <div className="w-10 h-12 rounded-xl border-2 border-ink bg-brand-tint overflow-hidden shrink-0 flex items-center justify-center p-1">
               <img
                 src={selectedTpl.thumb}
                 alt={selectedTpl.name}
                 className="h-full w-auto object-contain"
               />
             </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-xs font-medium text-neutral-400">
-                Template Terpilih
+            <div className="truncate">
+              <span className="font-editorial-mono text-[10px] text-brand block">
+                TEMPLATE TERPILIH
               </span>
-              <span className="text-sm font-bold truncate max-w-[200px] sm:max-w-xs md:max-w-md text-white">
+              <h4 className="font-display text-sm text-ink uppercase truncate">
                 {selectedTpl.name.replace(/^[^\w\s]+/, '').trim()}
-              </span>
-              <span className="text-xs font-semibold" style={{ color: 'var(--primary)' }}>
-                {selectedTpl.category} • {selectedTpl.totalPhoto} Pose
-              </span>
+              </h4>
             </div>
           </div>
 
-          {/* Confirm Button */}
           <button
-            onClick={onConfirmTemplate}
-            className="px-7 py-3 rounded-xl font-bold text-sm flex items-center gap-2 cursor-pointer transition-all duration-150 hover:bg-pink-600 active:scale-95 shadow-sm shrink-0"
-            style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}
+            type="button"
+            onClick={() => {
+              playClickSound();
+              onConfirmTemplate();
+            }}
+            className="btn-brutal shrink-0 text-xs sm:text-sm py-3 px-5 shadow-stk-sm"
           >
-            <Camera size={18} />
-            <span>Pakai Template &amp; Buka Kamera →</span>
+            <Camera size={16} />
+            <span>Buka Kamera Studio</span>
+            <span>↗</span>
           </button>
         </div>
-      </div>
+      </aside>
     </div>
   );
 };
