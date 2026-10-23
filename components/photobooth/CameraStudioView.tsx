@@ -200,9 +200,15 @@ export const CameraStudioView: React.FC<CameraStudioViewProps> = ({
               >
                 {countdown}
               </div>
-              <p className="font-mono text-xs sm:text-sm font-bold text-white uppercase tracking-widest bg-ink border-2 border-lime px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-center mx-4">
-                {`POSE ${currentShot + 1} DARI ${totalPhoto}! TAHAN SENYUM`}
-              </p>
+              <div className="flex flex-col items-center gap-2">
+                <p className="font-mono text-xs sm:text-sm font-bold text-white uppercase tracking-widest bg-ink border-2 border-lime px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-center mx-4">
+                  {`POSE ${currentShot + 1} DARI ${totalPhoto}! TAHAN SENYUM`}
+                </p>
+                <div className="inline-flex items-center gap-1.5 bg-ink/90 border border-pink text-white font-mono text-[10px] sm:text-xs px-3 py-1 rounded-full shadow-stk-sm">
+                  <span className="w-2 h-2 rounded-full bg-pink animate-ping" />
+                  <span className="font-bold tracking-wider text-pink">● LIVE MOTION BUFFER RECORDING</span>
+                </div>
+              </div>
             </div>
           )}
 

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Download, Share2, Copy, Check, Printer, RotateCcw, Palette, ArrowRight } from 'lucide-react';
+import { Download, Share2, Check, Printer, RotateCcw, Palette, ArrowRight } from 'lucide-react';
 import { FrameTemplate, FilterType, FILTERS } from '@/app/photobooth/framesData';
 import { playClickSound } from '@/lib/sfx';
 
@@ -184,60 +184,45 @@ export const ResultCelebrationView: React.FC<ResultCelebrationViewProps> = ({
 
         {/* Action Buttons Grid (Neo-brutalist) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 max-w-md w-full">
-          {/* Primary Action Button */}
-          {isGifActive ? (
+          {/* Download Strip Foto (PNG) Button */}
+          <button
+            type="button"
+            onClick={() => {
+              playClickSound();
+              onDownload();
+            }}
+            className={`btn-brutal py-3 sm:py-3.5 px-4 sm:px-5 text-xs sm:text-sm min-h-[44px] ${
+              !isGifActive ? 'bg-lime text-ink shadow-stk-sm' : 'btn-brutal-white'
+            }`}
+          >
+            <Download size={18} />
+            <span>Download Foto (PNG)</span>
+          </button>
+
+          {/* Download Motion Strip (GIF) Button */}
+          {finalGif ? (
             <button
               type="button"
               onClick={() => {
                 playClickSound();
                 onDownloadGif?.();
               }}
-              className="btn-brutal py-3 sm:py-3.5 px-5 sm:px-6 text-xs sm:text-sm min-h-[44px]"
+              className={`btn-brutal py-3 sm:py-3.5 px-4 sm:px-5 text-xs sm:text-sm min-h-[44px] ${
+                isGifActive ? 'bg-lime text-ink shadow-stk-sm' : 'btn-brutal-brand'
+              }`}
             >
               <Download size={18} />
-              <span>Download GIF (.gif) ↓</span>
+              <span>Download Motion (GIF)</span>
             </button>
           ) : (
             <button
               type="button"
-              onClick={() => {
-                playClickSound();
-                onDownload();
-              }}
-              className="btn-brutal py-3 sm:py-3.5 px-5 sm:px-6 text-xs sm:text-sm min-h-[44px]"
+              disabled
+              className="btn-brutal btn-brutal-white opacity-60 cursor-not-allowed py-3 sm:py-3.5 px-4 sm:px-5 text-xs sm:text-sm min-h-[44px]"
             >
               <Download size={18} />
-              <span>Download Strip (PNG) ↓</span>
+              <span>Motion Sedang Diproses</span>
             </button>
-          )}
-
-          {/* Alternate Format Download / Print */}
-          {isGifActive ? (
-            <button
-              type="button"
-              onClick={() => {
-                playClickSound();
-                onDownload();
-              }}
-              className="btn-brutal btn-brutal-white py-3 sm:py-3.5 px-5 sm:px-6 text-xs sm:text-sm min-h-[44px]"
-            >
-              <Download size={18} />
-              <span>Download Strip (PNG) ↓</span>
-            </button>
-          ) : (
-            finalGif && (
-              <button
-                type="button"
-                onClick={() => {
-                  playClickSound();
-                  onDownloadGif?.();
-                }}
-                className="btn-brutal btn-brutal-brand py-3 sm:py-3.5 px-5 sm:px-6 text-xs sm:text-sm min-h-[44px]"
-              >
-                <Download size={18} />
-                <span>Download GIF (.gif) 🎬</span>
-              </button>
-            )
           )}
 
           {/* Print Button (Photostrip) */}

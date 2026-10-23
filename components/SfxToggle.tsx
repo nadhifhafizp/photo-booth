@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { isSfxEnabled, setSfxEnabled, playClickSound } from '@/lib/sfx';
 
 interface SfxToggleProps {
@@ -9,11 +9,12 @@ interface SfxToggleProps {
 }
 
 export const SfxToggle: React.FC<SfxToggleProps> = ({ className = '', variant = 'pill' }) => {
-  const [enabled, setEnabled] = useState(true);
-
-  useEffect(() => {
-    setEnabled(isSfxEnabled());
-  }, []);
+  const [enabled, setEnabled] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return isSfxEnabled();
+    }
+    return true;
+  });
 
   const handleToggle = () => {
     const next = !enabled;

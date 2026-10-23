@@ -150,11 +150,8 @@ export async function renderRealStrip(
 /**
  * Photobooth watermark disabled per user request.
  */
-export function drawPhotoboothWatermark(
-  _ctx: CanvasRenderingContext2D,
-  _tpl: FrameTemplate
-) {
+export function drawPhotoboothWatermark(..._args: [CanvasRenderingContext2D?, FrameTemplate?]) {
   // Watermark stamp disabled per user request: "gausah kasih watermark snaporia dulu, comot dari funcam dulu aja"
-  return;
+  return _args;
 }
 

@@ -1,167 +1,157 @@
 import { GIFEncoder, quantize, applyPalette } from 'gifenc';
-import { FilterType, FILTERS } from '@/app/photobooth/framesData';
+import { FrameTemplate, FilterType, FILTERS } from '@/app/photobooth/framesData';
+import { loadImage, drawImageCover, applyFilterToImage } from '@/lib/canvasRenderer';
 
 export interface GenerateGifOptions {
-  photos: string[]; // dataUrls
+  photos: string[]; // Final static photos as fallback
+  burstPhotos?: string[][]; // Motion burst frames per slot: burstPhotos[slotIndex] = [frame0, frame1, ...]
+  template: FrameTemplate; // Photostrip template with coordinates & frame graphic
   filter?: FilterType;
-  delayMs?: number; // default 550ms
-  width?: number; // default 500px
-  height?: number; // default 650px
-  templateName?: string;
+  delayMs?: number; // Delay per frame in ms (default 120ms)
+  maxGifWidth?: number; // Maximum width of the output GIF strip (default 400px)
 }
 
 /**
- * Generate an animated GIF from a sequence of captured photobooth poses.
- * Completely client-side using gifenc.
+ * Generate an animated GIF photostrip from captured motion frames.
+ * Motion remains strictly inside the chosen photostrip template frame,
+ * preserving cutouts, coordinate rotations, filters, and overlay art.
  */
 export async function generatePhotoboothGif({
   photos,
+  burstPhotos,
+  template,
   filter = 'normal',
-  delayMs = 550,
-  width = 480,
-  height = 640,
-  templateName = 'Snaporia Booth',
+  delayMs = 120,
+  maxGifWidth = 400,
 }: GenerateGifOptions): Promise<string> {
   if (!photos || photos.length === 0) {
-    throw new Error('Tidak ada foto untuk membuat GIF.');
+    throw new Error('Tidak ada foto untuk membuat motion strip.');
   }
 
-  // Preload all pose images
-  const loadedImages: HTMLImageElement[] = await Promise.all(
-    photos.map(
-      src =>
-        new Promise<HTMLImageElement>((resolve, reject) => {
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.onload = () => resolve(img);
-          img.onerror = () => reject(new Error('Gagal memuat pose foto untuk GIF'));
-          img.src = src;
-        })
-    )
+  // 1. Load template overlay image
+  const templateImg = await loadImage(template.template);
+
+  // 2. Normalize motion frames for each slot
+  // If a slot has recorded motion frames, use them; otherwise fallback to the still photo
+  const slotFramesSrc: string[][] = template.coordinates.map((_, i) => {
+    const burst = burstPhotos && burstPhotos[i] && burstPhotos[i].length > 0 ? burstPhotos[i] : null;
+    if (burst && burst.length > 0) {
+      return burst;
+    }
+    const still = photos[i] || photos[0];
+    return [still];
+  });
+
+  // Preload all unique images to ensure synchronous canvas drawing
+  const allUniqueSrcs = Array.from(new Set(slotFramesSrc.flat()));
+  const loadedMap = new Map<string, HTMLImageElement>();
+  await Promise.all(
+    allUniqueSrcs.map(async src => {
+      try {
+        const img = await loadImage(src);
+        loadedMap.set(src, img);
+      } catch (err) {
+        console.warn('Gagal memuat salah satu frame motion:', err);
+      }
+    })
   );
 
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  if (!ctx) throw new Error('Tidak dapat membuat 2D canvas context untuk GIF');
-
-  const gif = GIFEncoder();
-  const filterDef = FILTERS.find(f => f.id === filter);
-  const filterCss = filterDef?.css ?? 'none';
-
-  // Format date
-  const now = new Date();
-  const dateStr = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(
-    now.getDate()
-  ).padStart(2, '0')}`;
-
-  for (let i = 0; i < loadedImages.length; i++) {
-    const img = loadedImages[i];
-
-    // Clear canvas
-    ctx.filter = 'none';
-    ctx.fillStyle = '#0e0b1f'; // dark brutalist base
-    ctx.fillRect(0, 0, width, height);
-
-    // Inner paper container
-    const margin = 18;
-    const cardW = width - margin * 2;
-    const cardH = height - margin * 2;
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.roundRect(margin, margin, cardW, cardH, 20);
-    ctx.fill();
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = '#0e0b1f';
-    ctx.stroke();
-
-    // Top Header
-    ctx.fillStyle = '#5637f2'; // brand purple
-    ctx.font = 'bold 12px monospace';
-    ctx.fillText('SNAPORIA • LIVE MOTION', margin + 14, margin + 26);
-
-    ctx.fillStyle = '#6b6785';
-    ctx.font = 'bold 11px monospace';
-    ctx.textAlign = 'right';
-    ctx.fillText(dateStr, margin + cardW - 14, margin + 26);
-    ctx.textAlign = 'left';
-
-    // Photo Area
-    const photoTop = margin + 38;
-    const photoH = cardH - 85;
-    const photoW = cardW - 24;
-    const photoX = margin + 12;
-
-    // Apply filter
-    ctx.save();
-    ctx.beginPath();
-    ctx.roundRect(photoX, photoTop, photoW, photoH, 14);
-    ctx.clip();
-
-    ctx.filter = filterCss;
-
-    // Draw photo cover (aspect fill)
-    const imgAspect = img.width / img.height;
-    const targetAspect = photoW / photoH;
-    let sW = img.width;
-    let sH = img.height;
-    let sX = 0;
-    let sY = 0;
-
-    if (imgAspect > targetAspect) {
-      sW = img.height * targetAspect;
-      sX = (img.width - sW) / 2;
-    } else {
-      sH = img.width / targetAspect;
-      sY = (img.height - sH) / 2;
+  // Map slot sources to loaded Image elements
+  const slotImages: HTMLImageElement[][] = slotFramesSrc.map(srcs => {
+    const imgs = srcs.map(s => loadedMap.get(s)).filter((img): img is HTMLImageElement => !!img);
+    if (imgs.length === 0) {
+      // Emergency fallback to first loaded image
+      const fallback = loadedMap.values().next().value;
+      return fallback ? [fallback] : [];
     }
+    return imgs;
+  });
 
-    ctx.drawImage(img, sX, sY, sW, sH, photoX, photoTop, photoW, photoH);
-    ctx.restore();
+  // 3. Calculate scaled dimensions for the output GIF
+  const scale = maxGifWidth / template.width;
+  const gifWidth = Math.round(maxGifWidth);
+  const gifHeight = Math.round(template.height * scale);
 
-    // Photo border
-    ctx.lineWidth = 2.5;
-    ctx.strokeStyle = '#0e0b1f';
-    ctx.beginPath();
-    ctx.roundRect(photoX, photoTop, photoW, photoH, 14);
-    ctx.stroke();
+  const canvas = document.createElement('canvas');
+  canvas.width = gifWidth;
+  canvas.height = gifHeight;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) throw new Error('Tidak dapat membuat context 2D untuk motion GIF');
 
-    // Bottom Footer
-    ctx.fillStyle = '#0e0b1f';
-    ctx.font = 'bold 12px sans-serif';
-    ctx.fillText(templateName.toUpperCase(), margin + 14, margin + cardH - 16);
+  const filterCfg = FILTERS.find(f => f.id === filter) ?? FILTERS[0];
+  const hasFilter = filterCfg.canvas && filterCfg.canvas !== 'none';
 
-    // Pose Pill Badge
-    const badgeText = `POSE ${i + 1} OF ${loadedImages.length}`;
-    ctx.font = 'bold 10px monospace';
-    const textMetrics = ctx.measureText(badgeText);
-    const badgeW = textMetrics.width + 16;
-    const badgeH = 22;
-    const badgeX = margin + cardW - badgeW - 12;
-    const badgeY = margin + cardH - 28;
+  // 4. Construct sequence of frame indices (smooth boomerang or loop)
+  const maxBurstLength = Math.max(...slotImages.map(imgs => imgs.length));
+  const sequence: number[] = [];
 
-    ctx.fillStyle = '#c6ff3d'; // lime accent
-    ctx.beginPath();
-    ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 12);
-    ctx.fill();
-    ctx.lineWidth = 1.8;
-    ctx.strokeStyle = '#0e0b1f';
-    ctx.stroke();
+  if (maxBurstLength > 2) {
+    // Boomerang: 0 -> 1 -> ... -> N-1 -> N-2 -> ... -> 1
+    for (let i = 0; i < maxBurstLength; i++) sequence.push(i);
+    for (let i = maxBurstLength - 2; i > 0; i--) sequence.push(i);
+  } else {
+    // Simple 1-2 frames loop
+    for (let i = 0; i < Math.max(maxBurstLength, 1); i++) sequence.push(i);
+  }
 
-    ctx.fillStyle = '#0e0b1f';
-    ctx.fillText(badgeText, badgeX + 8, badgeY + 15);
+  // 5. Initialize GIFEncoder
+  const gif = GIFEncoder();
 
-    // Extract frame pixels
-    const frameData = ctx.getImageData(0, 0, width, height);
+  for (let step = 0; step < sequence.length; step++) {
+    const frameIdx = sequence[step];
 
-    // Quantize & apply palette
-    const palette = quantize(frameData.data, 256);
+    // Clear background
+    ctx.filter = 'none';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, gifWidth, gifHeight);
+
+    // Draw user motion frame inside each slot coordinate
+    template.coordinates.forEach((coord, slotIdx) => {
+      const imgsForSlot = slotImages[slotIdx];
+      if (!imgsForSlot || imgsForSlot.length === 0) return;
+
+      const img = imgsForSlot[frameIdx % imgsForSlot.length];
+      if (!img) return;
+
+      const filtered = hasFilter ? applyFilterToImage(img, filterCfg.canvas) : img;
+
+      const slotX = coord.x * scale;
+      const slotY = coord.y * scale;
+      const slotW = coord.width * scale;
+      const slotH = coord.height * scale;
+      const cx = slotX + slotW / 2;
+      const cy = slotY + slotH / 2;
+
+      ctx.save();
+      if (coord.rotate) {
+        ctx.translate(cx, cy);
+        ctx.rotate((coord.rotate * Math.PI) / 180);
+        ctx.translate(-cx, -cy);
+      }
+
+      ctx.beginPath();
+      ctx.rect(slotX, slotY, slotW, slotH);
+      ctx.clip();
+
+      drawImageCover(ctx, filtered, slotX, slotY, slotW, slotH);
+      ctx.restore();
+    });
+
+    // Draw the template overlay graphic on top
+    ctx.drawImage(templateImg, 0, 0, gifWidth, gifHeight);
+
+    // Extract frame pixels & quantize
+    const frameData = ctx.getImageData(0, 0, gifWidth, gifHeight);
+    const palette = quantize(frameData.data, 192);
     const index = applyPalette(frameData.data, palette);
 
-    gif.writeFrame(index, width, height, {
+    // Hold the peak frame (the snap moment at maxBurstLength - 1) slightly longer
+    const isPeakSnapFrame = frameIdx === maxBurstLength - 1;
+    const currentFrameDelay = isPeakSnapFrame ? Math.round(delayMs * 2.2) : delayMs;
+
+    gif.writeFrame(index, gifWidth, gifHeight, {
       palette,
-      delay: delayMs,
+      delay: currentFrameDelay,
     });
   }
 
