@@ -61,18 +61,23 @@ const WORKFLOW_STEPS = [
   {
     num: '02',
     title: 'POSE IN STUDIO',
-    desc: 'Kamera memandu 3 atau 4 pose dengan timer otomatis, shutter audio fisik, dan filter live B&W.',
+    desc: 'Kamera memandu 3 atau 4 pose dengan timer otomatis, shutter audio fisik, live motion capture, dan filter tone.',
     badge: 'AUTO COUNTDOWN',
   },
   {
     num: '03',
     title: 'DOWNLOAD & SHARE',
-    desc: 'Photostrip resolusi tinggi langsung jadi. Unduh instan dalam format PNG siap cetak tanpa watermark mengganggu.',
-    badge: 'PRINT READY',
+    desc: 'Photostrip resolusi tinggi langsung jadi. Unduh instan dalam format PNG siap cetak dan Animated Motion GIF (Boomerang) untuk media sosial.',
+    badge: 'PNG + GIF MOTION',
   },
 ];
 
 const DIFFERENCES = [
+  {
+    badge: 'LIVE MOTION GIF',
+    title: 'Photostrip Bergerak (Animated GIF)',
+    desc: 'Bukan cuma foto diam! Tangkap momen bergerak ala boomerang dan unduh sebagai animated photostrip GIF yang hidup untuk IG Story dan TikTok.',
+  },
   {
     badge: 'PRIVACY FIRST',
     title: '100% Client-Side Privacy',
@@ -131,7 +136,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'Format apa yang didapatkan saat mengunduh?',
-    a: 'Foto diunduh dalam format PNG resolusi tinggi siap cetak atau dibagikan langsung ke Instagram Story dan TikTok.',
+    a: 'Anda mendapatkan dua pilihan format sekaligus: Strip Foto HD (PNG) 300 DPI siap cetak, dan Animated Motion GIF (Boomerang loop) siap dibagikan ke Instagram Story dan TikTok.',
   },
   {
     q: 'Bisa digunakan di smartphone Android dan iPhone?',
@@ -278,6 +283,9 @@ export default function LandingPage() {
                   <span className="badge-dot" />
                   <span>● LIVE BOOTH</span>
                 </span>
+                <span className="chip-brutal bg-lime text-ink border-ink text-[11px] sm:text-xs">
+                  🎬 NEW: LIVE MOTION GIF
+                </span>
                 <span className="chip-brutal bg-yellow text-ink border-ink text-[11px] sm:text-xs">
                   ✦ 80+ VIRAL FRAMES
                 </span>
@@ -294,7 +302,7 @@ export default function LandingPage() {
 
               {/* Punchy Subheadline */}
               <p className="text-sm sm:text-base md:text-lg text-white/90 max-w-xl font-normal leading-relaxed">
-                Photobooth online aesthetic ala Korea dengan 80+ frame viral, filter kamera real-time, dan unduhan photostrip HD instan langsung dari browsermu.
+                Photobooth online aesthetic ala Korea dengan 80+ frame viral, filter kamera real-time, dan unduhan photostrip HD serta animated motion GIF boomerang instan langsung dari browsermu.
               </p>
 
               {/* Action Buttons */}

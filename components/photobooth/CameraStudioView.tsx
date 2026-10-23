@@ -1,6 +1,6 @@
 'use client';
 
-import React, { RefObject, useEffect } from 'react';
+import React, { RefObject, useEffect, useState, useMemo } from 'react';
 import { CameraOff, RefreshCw, FlipHorizontal, Timer, Sparkles, SwitchCamera, RotateCcw, Check } from 'lucide-react';
 import { FrameTemplate, FilterType, FILTERS } from '@/app/photobooth/framesData';
 import { playClickSound, playShutterSound, playBeepSound } from '@/lib/sfx';
@@ -27,7 +27,7 @@ interface CameraStudioViewProps {
   onToggleCameraFacing: () => void;
   onTriggerShutter: () => void;
   isCapturing: boolean;
-  pendingReviewPhoto?: { index: number; dataUrl: string } | null;
+  pendingReviewPhoto?: { index: number; dataUrl: string; motionFrames?: string[] } | null;
   onKeepPhoto?: () => void;
   onRetakeCurrent?: () => void;
   onRetakeSpecificPose?: (index: number) => void;
@@ -60,6 +60,43 @@ export const CameraStudioView: React.FC<CameraStudioViewProps> = ({
   onRetakeCurrent,
   onRetakeSpecificPose,
 }) => {
+  // Review mode toggle: 'motion' (boomerang loop) vs 'photo' (crisp still)
+  const [reviewMode, setReviewMode] = useState<'motion' | 'photo'>('motion');
+  const [reviewFrameIdx, setReviewFrameIdx] = useState(0);
+
+  const motionFrames = pendingReviewPhoto?.motionFrames;
+  const hasMotion = Boolean(motionFrames && motionFrames.length > 1);
+
+  // Boomerang sequence: 0 -> 1 -> ... -> N-1 -> N-2 -> ... -> 1
+  const boomerangSequence = useMemo(() => {
+    if (!motionFrames || motionFrames.length <= 1) return [];
+    const len = motionFrames.length;
+    const seq: number[] = [];
+    for (let i = 0; i < len; i++) seq.push(i);
+    for (let i = len - 2; i > 0; i--) seq.push(i);
+    return seq;
+  }, [motionFrames]);
+
+  // Reset to motion mode when a new photo review appears
+  useEffect(() => {
+    if (pendingReviewPhoto) {
+      setReviewMode('motion');
+      setReviewFrameIdx(0);
+    }
+  }, [pendingReviewPhoto?.index]);
+
+  // Boomerang frame animation loop during review
+  useEffect(() => {
+    if (!pendingReviewPhoto || reviewMode !== 'motion' || boomerangSequence.length === 0) {
+      return;
+    }
+    const interval = setInterval(() => {
+      setReviewFrameIdx(prev => (prev + 1) % boomerangSequence.length);
+    }, 120);
+
+    return () => clearInterval(interval);
+  }, [pendingReviewPhoto, reviewMode, boomerangSequence]);
+
   // Play sound effect on countdown changes
   useEffect(() => {
     if (countdown !== null && countdown > 0) {
@@ -140,15 +177,67 @@ export const CameraStudioView: React.FC<CameraStudioViewProps> = ({
 
           {/* ── RETAKE / KEEP REVIEW MODAL OVERLAY (PER POSE) ── */}
           {pendingReviewPhoto && (
-            <div className="absolute inset-0 z-40 bg-ink/85 backdrop-blur-xs flex flex-col items-center justify-center p-4 sm:p-6 gap-3 sm:gap-5">
-              <div className="badge-live text-[11px] sm:text-xs">
-                <span>✓ HASIL POSE {pendingReviewPhoto.index + 1} / {totalPhoto}</span>
+            <div className="absolute inset-0 z-40 bg-ink/90 backdrop-blur-xs flex flex-col items-center justify-center p-3 sm:p-6 gap-2.5 sm:gap-4 animate-in fade-in zoom-in-95 duration-150">
+              {/* Header Badges */}
+              <div className="flex items-center gap-2">
+                <div className="badge-live text-[10px] sm:text-xs">
+                  <span>✓ POSE {pendingReviewPhoto.index + 1} / {totalPhoto}</span>
+                </div>
+                {hasMotion && (
+                  <span className="chip-brutal bg-lime text-ink text-[10px] sm:text-xs py-0.5 px-2">
+                    🎬 {motionFrames!.length} LIVE FRAMES
+                  </span>
+                )}
               </div>
 
-              {/* Photo Preview Card */}
-              <div className="relative max-h-[45%] sm:max-h-[50%] aspect-[4/3] bg-white p-2 rounded-xl sm:rounded-2xl border-[2.5px] border-ink shadow-stk -rotate-1">
+              {/* Media Switcher: Motion vs Foto */}
+              {hasMotion && (
+                <div className="inline-flex items-center gap-1 p-1 bg-white border-2 border-ink rounded-full shadow-stk-sm select-none z-10">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      setReviewMode('motion');
+                    }}
+                    className={`px-3 py-1 rounded-full font-mono text-[10px] sm:text-xs font-bold uppercase transition-all cursor-pointer flex items-center gap-1.5 ${
+                      reviewMode === 'motion'
+                        ? 'bg-lime text-ink shadow-stk-sm'
+                        : 'text-ink hover:text-brand'
+                    }`}
+                  >
+                    <span>🎬 Loop Motion</span>
+                    <span className="bg-ink text-lime text-[8px] px-1 rounded-full font-black">LIVE</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      setReviewMode('photo');
+                    }}
+                    className={`px-3 py-1 rounded-full font-mono text-[10px] sm:text-xs font-bold uppercase transition-all cursor-pointer flex items-center gap-1.5 ${
+                      reviewMode === 'photo'
+                        ? 'bg-brand text-white shadow-stk-sm'
+                        : 'text-ink hover:text-brand'
+                    }`}
+                  >
+                    <span>📸 Foto Statis</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Photo / Motion Preview Card */}
+              <div className="relative max-h-[42%] sm:max-h-[48%] aspect-[4/3] bg-white p-2 rounded-xl sm:rounded-2xl border-[2.5px] border-ink shadow-stk -rotate-1">
+                {/* Floating sticker */}
+                <div className="absolute -top-2.5 -left-1 sm:-top-3 sm:-left-2 z-20 bg-yellow text-ink font-mono font-black text-[9px] sm:text-[10px] px-2 sm:px-2.5 py-0.5 rounded-full border-2 border-ink shadow-stk-sm rotate-[-4deg]">
+                  {reviewMode === 'motion' && hasMotion ? 'BOOMERANG LOOP 🎬' : 'HD SHUTTER SNAP 📸'}
+                </div>
+
                 <img
-                  src={pendingReviewPhoto.dataUrl}
+                  src={
+                    reviewMode === 'motion' && hasMotion && boomerangSequence.length > 0
+                      ? motionFrames![boomerangSequence[reviewFrameIdx]]
+                      : pendingReviewPhoto.dataUrl
+                  }
                   alt={`Review pose ${pendingReviewPhoto.index + 1}`}
                   className="w-full h-full object-cover rounded-lg sm:rounded-xl"
                 />
@@ -180,13 +269,15 @@ export const CameraStudioView: React.FC<CameraStudioViewProps> = ({
                   <span>
                     {pendingReviewPhoto.index + 1 === totalPhoto
                       ? 'Simpan & Buat Photostrip ↗'
-                      : 'Lanjut Pose Berikutnya ⟶'}
+                      : 'Simpan & Pose Lanjut ⟶'}
                   </span>
                 </button>
               </div>
 
               <p className="font-mono text-[10px] sm:text-[11px] text-white/70 text-center max-w-sm px-2">
-                Bisa retake ulang pose ini atau ganti kamera depan/belakang sebelum mengambil pose selanjutnya.
+                {hasMotion
+                  ? 'Gerakan live motion berhasil direkam! Cek animasi boomerang di atas atau retake jika ingin pose lain.'
+                  : 'Bisa retake ulang pose ini atau ganti kamera depan/belakang sebelum mengambil pose selanjutnya.'}
               </p>
             </div>
           )}
@@ -204,9 +295,9 @@ export const CameraStudioView: React.FC<CameraStudioViewProps> = ({
                 <p className="font-mono text-xs sm:text-sm font-bold text-white uppercase tracking-widest bg-ink border-2 border-lime px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-center mx-4">
                   {`POSE ${currentShot + 1} DARI ${totalPhoto}! TAHAN SENYUM`}
                 </p>
-                <div className="inline-flex items-center gap-1.5 bg-ink/90 border border-pink text-white font-mono text-[10px] sm:text-xs px-3 py-1 rounded-full shadow-stk-sm">
-                  <span className="w-2 h-2 rounded-full bg-pink animate-ping" />
-                  <span className="font-bold tracking-wider text-pink">● LIVE MOTION BUFFER RECORDING</span>
+                <div className="inline-flex items-center gap-1.5 bg-ink border-2 border-lime text-lime font-mono text-[10px] sm:text-xs px-3 sm:px-4 py-1 sm:py-1.5 rounded-full shadow-stk-sm">
+                  <span className="w-2.5 h-2.5 rounded-full bg-lime animate-ping" />
+                  <span className="font-bold tracking-wider">● LIVE MOTION: AYO GERAK & BERPOSE!</span>
                 </div>
               </div>
             </div>
