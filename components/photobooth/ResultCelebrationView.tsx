@@ -1,7 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Download, Share2, Check, Printer, RotateCcw, Palette, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  Download,
+  Share2,
+  Check,
+  Printer,
+  RotateCcw,
+  Palette,
+  ArrowRight,
+  QrCode,
+  Maximize2,
+  Copy,
+  ExternalLink,
+  X,
+  Loader2,
+} from 'lucide-react';
+import QRCode from 'qrcode';
 import { FrameTemplate, FilterType, FILTERS } from '@/app/photobooth/framesData';
 import { playClickSound } from '@/lib/sfx';
 
@@ -37,10 +52,91 @@ export const ResultCelebrationView: React.FC<ResultCelebrationViewProps> = ({
   const [showFilterPicker, setShowFilterPicker] = useState(false);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
 
+  // Dynamic QR Code & Share State
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
+  const [isUploadingShare, setIsUploadingShare] = useState<boolean>(false);
+  const [shareError, setShareError] = useState<string | null>(null);
+  const [showQrModal, setShowQrModal] = useState<boolean>(false);
+
+  // Auto-generate share link & barcode when final image is available
+  useEffect(() => {
+    let isMounted = true;
+
+    async function generateMobileShare() {
+      if (!finalImage) return;
+
+      setIsUploadingShare(true);
+      setShareError(null);
+
+      try {
+        const res = await fetch('/api/share', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            image: finalImage,
+            gif: finalGif || null,
+            templateName: selectedTpl.name,
+          }),
+        });
+
+        if (!res.ok) {
+          throw new Error('Gagal menyiapkan tautan barcode');
+        }
+
+        const data = await res.json();
+        if (!isMounted) return;
+
+        // If running locally, prefer local LAN address so smartphones on Wi-Fi can scan and open
+        const isLocal =
+          typeof window !== 'undefined' &&
+          (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+        const resolvedOrigin =
+          isLocal && data.lanHost
+            ? `${window.location.protocol}//${data.lanHost}`
+            : window.location.origin;
+
+        const targetUrl = `${resolvedOrigin}${data.sharePath}`;
+        setShareUrl(targetUrl);
+
+        const qrData = await QRCode.toDataURL(targetUrl, {
+          width: 360,
+          margin: 2,
+          color: {
+            dark: '#0e0b1f',
+            light: '#ffffff',
+          },
+          errorCorrectionLevel: 'M',
+        });
+
+        if (isMounted) {
+          setQrCodeDataUrl(qrData);
+        }
+      } catch (err: unknown) {
+        if (isMounted) {
+          console.error('Gagal membuat barcode share:', err);
+          setShareError('Gagal membuat barcode. Coba lagi.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsUploadingShare(false);
+        }
+      }
+    }
+
+    generateMobileShare();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [finalImage, finalGif, selectedTpl.name]);
+
   const handleCopyLink = async () => {
     playClickSound();
+    const urlToCopy = shareUrl || window.location.href;
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(urlToCopy);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch {
@@ -51,12 +147,13 @@ export const ResultCelebrationView: React.FC<ResultCelebrationViewProps> = ({
 
   const handleShare = async () => {
     playClickSound();
+    const urlToShare = shareUrl || window.location.href;
     if (navigator.share) {
       try {
         await navigator.share({
           title: 'Snaporia Photobooth Strip',
           text: 'Lihat photostrip dan animated GIF kami yang baru saja dibuat di Snaporia!',
-          url: window.location.href,
+          url: urlToShare,
         });
         setShared(true);
         setTimeout(() => setShared(false), 2500);
@@ -93,6 +190,21 @@ export const ResultCelebrationView: React.FC<ResultCelebrationViewProps> = ({
   };
 
   const isGifActive = activeMedia === 'gif' && !!finalGif;
+
+  // Keyboard accessibility for QR modal (Escape to close)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowQrModal(false);
+      }
+    };
+    if (showQrModal) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showQrModal]);
 
   return (
     <div className="w-full max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 pb-20 sm:pb-28 flex flex-col lg:flex-row gap-6 sm:gap-10 lg:gap-14 items-center justify-center animate-in fade-in duration-200">
@@ -287,20 +399,96 @@ export const ResultCelebrationView: React.FC<ResultCelebrationViewProps> = ({
           </div>
         )}
 
-        {/* QR Code Sticker Card for Mobile Transfer */}
-        <div className="max-w-md p-4 sm:p-5 bg-white rounded-2xl sm:rounded-3xl border-[2.5px] border-ink shadow-stk flex items-center gap-3 sm:gap-4">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl border-2 border-ink bg-yellow p-2 shrink-0 flex items-center justify-center shadow-stk-sm">
-            <svg viewBox="0 0 24 24" className="w-full h-full text-ink fill-current">
-              <path d="M2 2h8v8H2V2zm2 2v4h4V4H4zm10-2h8v8h-8V2zm2 2v4h4V4h-4zM2 14h8v8H2v-8zm2 2v4h4v-4H4zm14 0h4v2h-4v-2zm-4 0h2v2h-2v-2zm2 2h2v2h-2v-2zm2 2h2v2h-2v-2zm-4 0h2v2h-2v-2zm0-4h2v2h-2v-2zm4-2h2v2h-2v-2z" />
-            </svg>
+        {/* Real Dynamic QR Code Sticker Card for Mobile Transfer */}
+        <div className="max-w-md p-4 sm:p-5 bg-white rounded-2xl sm:rounded-3xl border-[2.5px] border-ink shadow-stk flex flex-col gap-3">
+          <div className="flex items-center gap-3 sm:gap-4">
+            {/* QR Thumbnail */}
+            <button
+              type="button"
+              onClick={() => {
+                if (qrCodeDataUrl) {
+                  playClickSound();
+                  setShowQrModal(true);
+                }
+              }}
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl border-2 border-ink bg-yellow p-1.5 shrink-0 flex items-center justify-center shadow-stk-sm relative cursor-pointer group hover:scale-105 transition-transform"
+              title="Klik untuk perbesar barcode QR"
+              aria-label="Perbesar barcode QR"
+            >
+              {isUploadingShare ? (
+                <div className="flex flex-col items-center justify-center text-ink gap-1">
+                  <Loader2 size={20} className="animate-spin text-ink" />
+                  <span className="font-mono text-[8px] font-bold">PROSES</span>
+                </div>
+              ) : qrCodeDataUrl ? (
+                <>
+                  <img
+                    src={qrCodeDataUrl}
+                    alt="Barcode QR Snaporia"
+                    className="w-full h-full object-contain rounded-lg"
+                  />
+                  <div className="absolute inset-0 bg-ink/10 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Maximize2 size={16} className="text-ink bg-white/90 p-0.5 rounded shadow-sm" />
+                  </div>
+                </>
+              ) : (
+                <QrCode size={28} className="text-ink" />
+              )}
+            </button>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h4 className="font-display text-sm sm:text-base text-ink uppercase leading-tight">
+                  Scan Barcode ke HP
+                </h4>
+                {qrCodeDataUrl && (
+                  <span className="bg-lime text-ink font-mono text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-ink">
+                    AKTIF ✓
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] sm:text-xs text-muted mt-1 leading-relaxed">
+                Arahkan kamera ponsel Anda ke barcode untuk langsung melihat dan mengunduh photostrip ini di HP.
+              </p>
+            </div>
           </div>
-          <div>
-            <h4 className="font-display text-sm sm:text-base text-ink uppercase leading-tight">
-              Scan untuk simpan di HP
-            </h4>
-            <p className="text-[11px] sm:text-xs text-muted mt-1 leading-relaxed">
-              Buka kamera ponsel Anda untuk mengunduh photostrip ini langsung tanpa kabel.
-            </p>
+
+          {/* Quick Share Link & Expand Action Buttons */}
+          <div className="flex items-center gap-2 pt-2 border-t border-ink/20">
+            {qrCodeDataUrl && (
+              <button
+                type="button"
+                onClick={() => {
+                  playClickSound();
+                  setShowQrModal(true);
+                }}
+                className="btn-brutal btn-brutal-white text-[11px] py-1.5 px-3 flex-1 justify-center min-h-[36px]"
+              >
+                <Maximize2 size={12} />
+                <span>Perbesar Barcode</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="btn-brutal btn-brutal-white text-[11px] py-1.5 px-3 flex-1 justify-center min-h-[36px]"
+            >
+              {copied ? <Check size={12} className="text-brand" /> : <Copy size={12} />}
+              <span>{copied ? 'Tersalin!' : 'Salin Tautan'}</span>
+            </button>
+
+            {shareUrl && (
+              <a
+                href={shareUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-brutal btn-brutal-white text-[11px] py-1.5 px-2.5 justify-center min-h-[36px] inline-flex items-center"
+                title="Buka langsung tautan di tab baru"
+              >
+                <ExternalLink size={12} />
+              </a>
+            )}
           </div>
         </div>
 
@@ -359,6 +547,76 @@ export const ResultCelebrationView: React.FC<ResultCelebrationViewProps> = ({
         </div>
 
       </div>
+
+      {/* ── EXPANDED QR CODE MODAL ── */}
+      {showQrModal && qrCodeDataUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-ink/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150"
+          onClick={() => setShowQrModal(false)}
+        >
+          <div
+            className="bg-white border-[3px] border-ink rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-stk flex flex-col items-center gap-4 relative"
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowQrModal(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-full border-2 border-ink bg-paper hover:bg-brand hover:text-white transition cursor-pointer"
+              aria-label="Tutup"
+            >
+              <X size={16} />
+            </button>
+
+            <div className="text-center">
+              <span className="bg-yellow text-ink font-mono text-[10px] font-bold px-2 py-0.5 rounded-full border border-ink uppercase">
+                MOBILE TRANSFER INSTAN
+              </span>
+              <h3 className="font-display text-xl sm:text-2xl text-ink mt-1.5">
+                Scan Barcode ini di HP
+              </h3>
+              <p className="text-xs text-muted mt-1 font-mono">
+                Buka kamera ponsel & arahkan langsung ke barcode
+              </p>
+            </div>
+
+            {/* Large QR Display */}
+            <div className="p-3 bg-white border-2 border-ink rounded-2xl shadow-stk-sm">
+              <img
+                src={qrCodeDataUrl}
+                alt="Barcode QR Snaporia"
+                className="w-56 h-56 sm:w-64 sm:h-64 object-contain"
+              />
+            </div>
+
+            {/* Instruction Steps */}
+            <div className="w-full bg-cream border border-ink/30 rounded-xl p-3 text-[11px] font-mono text-ink space-y-1">
+              <div>1. Buka aplikasi Kamera di ponsel Anda.</div>
+              <div>2. Arahkan lensa kamera ke barcode di atas.</div>
+              <div>3. Tekan tautan yang muncul untuk membuka & mengunduh foto.</div>
+            </div>
+
+            {/* Actions */}
+            <div className="w-full flex gap-2">
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                className="btn-brutal btn-brutal-brand text-xs py-2.5 px-4 flex-1 justify-center min-h-[40px]"
+              >
+                {copied ? <Check size={14} /> : <Copy size={14} />}
+                <span>{copied ? 'Tersalin!' : 'Salin Tautan'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowQrModal(false)}
+                className="btn-brutal btn-brutal-white text-xs py-2.5 px-4 justify-center min-h-[40px]"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
